@@ -20,7 +20,8 @@ func TestSignAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ok := sig.Verify(pub, transcript)
+	transcript2 := merlin.NewTranscript("hello")
+	ok := pub.Verify(sig, transcript2)
 	if !ok {
 		t.Fatalf("Failed to verify")
 	}

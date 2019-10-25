@@ -1,12 +1,11 @@
 package schnorrkel
 
 import (
-	"fmt"
-
 	"github.com/noot/merlin"
 	r255 "github.com/noot/ristretto255"
 )
 
+// Signature holds a schnorrkel signature
 type Signature struct {
 	R *r255.Element
 	S *r255.Scalar
@@ -31,13 +30,11 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	}
 	pubc := pub.Compress()
 
-	fmt.Printf("pubc %x\n", pubc)
-
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 
-	// note: merlin library doesn't have build_rng yet. this is not complete
+	// note: TODO: merlin library doesn't have build_rng yet. this is cannot yet be completed
 	// need to also add nonce: see https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/context.rs#L153
-	//r := t.ExtractBytes([]byte("signing"), 32)
+	// r := t.ExtractBytes([]byte("signing"), 32)
 
 	// choose random r
 	r, err := NewRandomScalar()
@@ -68,13 +65,11 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 // 1. k = transcript.extract_bytes()
 // 2. R' = -ky + gs
 // 3. return R' == R
-func (s *Signature) Verify(pub *PublicKey, t *merlin.Transcript) bool {
+func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
-	pubc := pub.Compress()
+	pubc := p.Compress()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 	t.AppendMessage([]byte("sign:R"), s.R.Encode([]byte{}))
-
-	fmt.Printf("pubc %x\n", pubc)
 
 	kb := t.ExtractBytes([]byte("sign:c"), 64)
 	k := r255.NewScalar()
@@ -82,10 +77,8 @@ func (s *Signature) Verify(pub *PublicKey, t *merlin.Transcript) bool {
 
 	Rp := r255.NewElement()
 	Rp = Rp.ScalarBaseMult(s.S)
-	ky := (pub.key).ScalarMult(k, pub.key)
+	ky := (p.key).ScalarMult(k, p.key)
 	Rp = Rp.Subtract(Rp, ky)
-
-	fmt.Printf("R: %x\nRp: %x\n", s.R, Rp)
 
 	return Rp.Equal(s.R) == 1
 }
