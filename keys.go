@@ -18,7 +18,7 @@ type SecretKey struct {
 	nonce [32]byte
 }
 
-// PublicKey is a member 
+// PublicKey is a member
 type PublicKey struct {
 	key *r255.Element
 }
@@ -35,10 +35,7 @@ func GenerateKeypair() (*SecretKey, *PublicKey, error) {
 	}
 
 	// decodes priv bytes as little-endian
-	scpriv := r255.NewScalar()
-	scpriv.FromUniformBytes(s[:])
-
-	msc := &MiniSecretKey{key: scpriv}
+	msc := NewMiniSecretKey(s)
 	return msc.ExpandEd25519(), msc.Public(), nil
 }
 
@@ -75,7 +72,7 @@ func NewRandomMiniSecretKey() (*MiniSecretKey, error) {
 	return &MiniSecretKey{key: scpriv}, nil
 }
 
-// ExpandEd25519 expands a mini secret key into a secret key 
+// ExpandEd25519 expands a mini secret key into a secret key
 // https://github.com/w3f/schnorrkel/blob/43f7fc00724edd1ef53d5ae13d82d240ed6202d5/src/keys.rs#L196
 func (s *MiniSecretKey) ExpandEd25519() *SecretKey {
 	h := sha512.Sum512(s.key.Encode([]byte{}))
@@ -96,17 +93,26 @@ func (s *MiniSecretKey) ExpandEd25519() *SecretKey {
 // Public gets the public key corresponding to this mini secret key
 func (s *MiniSecretKey) Public() *PublicKey {
 	e := r255.NewElement()
-	return &PublicKey{key: e.ScalarBaseMult(s.key)}
+	sk := s.ExpandEd25519()
+	skey, err := ScalarFromBytes(sk.key)
+	if err != nil {
+		return nil
+	}
+	return &PublicKey{key: e.ScalarBaseMult(skey)}
 }
 
 // Public gets the public key corresponding to this secret key
 func (s *SecretKey) Public() (*PublicKey, error) {
 	e := r255.NewElement()
-	sc, err := NewMiniSecretKeyFromRaw(s.key)
+	// sc, err := NewMiniSecretKeyFromRaw(s.key)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	sc, err := ScalarFromBytes(s.key)
 	if err != nil {
 		return nil, err
 	}
-	return &PublicKey{key: e.ScalarBaseMult(sc.key)}, nil
+	return &PublicKey{key: e.ScalarBaseMult(sc)}, nil
 }
 
 // Compress returns the encoding of the point underlying the public key

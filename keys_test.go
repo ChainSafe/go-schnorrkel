@@ -15,6 +15,15 @@ func TestGenerateKeypair(t *testing.T) {
 	if priv == nil || pub == nil {
 		t.Fatal("Fail: priv or pub is nil")
 	}
+
+	pub2, err := priv.Public()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bytes.Equal(pub2.key.Encode([]byte{}), pub.key.Encode([]byte{})) {
+		t.Fatalf("Fail: public key from secret doesn't equal generated public\n%x\n%x", pub2.key.Encode([]byte{}), pub.key.Encode([]byte{}))
+	}
 }
 
 // test cases from: https://github.com/Warchant/sr25519-crust/blob/master/test/keypair_from_seed.cpp
@@ -40,11 +49,13 @@ func TestMiniSecretKey_ExpandEd25519(t *testing.T) {
 	}
 
 	pub := msc.Public().Compress()
-	t.Logf("%x", pub)
+	if !bytes.Equal(pub[:], expected[64:]) {
+		t.Errorf("Fail to expand nonce: got %x expected %x", sc.nonce, expected[32:64])
+	}
 }
 
 func TestMiniSecretKey_Public(t *testing.T) {
-	raw := [32]byte{1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0,1,2}
+	raw := [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2}
 	msc, err := NewMiniSecretKeyFromRaw(raw)
 	if err != nil {
 		t.Fatal(err)
