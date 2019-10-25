@@ -13,8 +13,6 @@ func TestSignAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Logf("pub %x", pub.key.Encode([]byte{}))
-
 	sig, err := priv.Sign(transcript)
 	if err != nil {
 		t.Fatal(err)

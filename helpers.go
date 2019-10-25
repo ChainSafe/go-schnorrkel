@@ -1,5 +1,11 @@
 package schnorrkel
 
+import (
+	"crypto/rand"
+
+	r255 "github.com/noot/ristretto255"
+)
+
 // https://github.com/w3f/schnorrkel/blob/718678e51006d84c7d8e4b6cde758906172e74f8/src/scalars.rs#L18
 func divideScalarByCofactor(s []byte) []byte {
 	l := len(s) - 1
@@ -12,4 +18,41 @@ func divideScalarByCofactor(s []byte) []byte {
 	}
 
 	return s
+}
+
+// NewRandomElement returns a random ristretto element
+func NewRandomElement() (*r255.Element, error) {
+	e := r255.NewElement()
+	s := [64]byte{}
+	_, err := rand.Read(s[:])
+	if err != nil {
+		return nil, err
+	}
+
+	return e.FromUniformBytes(s[:]), nil
+}
+
+// NewRandomScalar returns a random ristretto scalar
+func NewRandomScalar() (*r255.Scalar, error) {
+	s := [64]byte{}
+	_, err := rand.Read(s[:])
+	if err != nil {
+		return nil, err
+	}
+
+	ss := r255.NewScalar()
+	return ss.FromUniformBytes(s[:]), nil
+}
+
+// ScalarFromBytes returns a ristretto scalar from the input bytes
+// performs input mod l where l is the group order
+func ScalarFromBytes(b [32]byte) (*r255.Scalar, error) {
+	s := r255.NewScalar()
+	err := s.Decode(b[:])
+	if err != nil {
+		return nil, err
+	}
+
+	s.Reduce()
+	return s, nil
 }

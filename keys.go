@@ -23,9 +23,6 @@ type PublicKey struct {
 	key *r255.Element
 }
 
-// order of the ristretto255 group
-// var order = [4]uint64{0x5812631a5cf5d3ed, 0x14def9dea2f79cd6, 0, 0x1000000000000000}
-
 // GenerateKeypair generates a new schnorrkel secret key and public key
 func GenerateKeypair() (*SecretKey, *PublicKey, error) {
 	s := [64]byte{}
@@ -104,10 +101,6 @@ func (s *MiniSecretKey) Public() *PublicKey {
 // Public gets the public key corresponding to this secret key
 func (s *SecretKey) Public() (*PublicKey, error) {
 	e := r255.NewElement()
-	// sc, err := NewMiniSecretKeyFromRaw(s.key)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	sc, err := ScalarFromBytes(s.key)
 	if err != nil {
 		return nil, err
@@ -121,37 +114,4 @@ func (p *PublicKey) Compress() [32]byte {
 	enc := [32]byte{}
 	copy(enc[:], b)
 	return enc
-}
-
-func NewRandomElement() (*r255.Element, error) {
-	e := r255.NewElement()
-	s := [64]byte{}
-	_, err := rand.Read(s[:])
-	if err != nil {
-		return nil, err
-	}
-
-	return e.FromUniformBytes(s[:]), nil
-}
-
-func NewRandomScalar() (*r255.Scalar, error) {
-	s := [64]byte{}
-	_, err := rand.Read(s[:])
-	if err != nil {
-		return nil, err
-	}
-
-	ss := r255.NewScalar()
-	return ss.FromUniformBytes(s[:]), nil
-}
-
-func ScalarFromBytes(b [32]byte) (*r255.Scalar, error) {
-	s := r255.NewScalar()
-	err := s.Decode(b[:])
-	if err != nil {
-		return nil, err
-	}
-
-	s.Reduce()
-	return s, nil
 }

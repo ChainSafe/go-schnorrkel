@@ -33,7 +33,7 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 
 	// note: TODO: merlin library doesn't have build_rng yet. this is cannot yet be completed
-	// need to also add nonce: see https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/context.rs#L153
+	// need to add nonce to calculation: see https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/context.rs#L153
 	// r := t.ExtractBytes([]byte("signing"), 32)
 
 	// choose random r
