@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 
+	"github.com/noot/merlin"
 	r255 "github.com/noot/ristretto255"
 )
 
@@ -69,6 +70,23 @@ func NewRandomMiniSecretKey() (*MiniSecretKey, error) {
 	return &MiniSecretKey{key: scpriv}, nil
 }
 
+func (s *MiniSecretKey) ExpandUniform() *SecretKey {
+	t := merlin.NewTranscript("ExpandSecretKeys")
+	t.AppendMessage([]byte("mini"), s.key.Encode([]byte{}))
+	scalarBytes := t.ExtractBytes([]byte("sk"), 64)
+	key := r255.NewScalar()
+	key.FromUniformBytes(scalarBytes[:])
+	nonce := t.ExtractBytes([]byte("no"), 32)
+	key32 := [32]byte{}
+	copy(key32[:], key.Encode([]byte{}))
+	nonce32 := [32]byte{}
+	copy(nonce32[:], nonce)
+	return &SecretKey{
+		key:   key32,
+		nonce: nonce32,
+	}
+}
+
 // ExpandEd25519 expands a mini secret key into a secret key
 // https://github.com/w3f/schnorrkel/blob/43f7fc00724edd1ef53d5ae13d82d240ed6202d5/src/keys.rs#L196
 func (s *MiniSecretKey) ExpandEd25519() *SecretKey {
@@ -109,6 +127,8 @@ func (s *SecretKey) Public() (*PublicKey, error) {
 }
 
 // Compress returns the encoding of the point underlying the public key
+// TODO: how does public key derivation work in rust? the encoded pubkeys don't match up,
+// but I'm convinced the encode/compress functions are equivalent in rust and go
 func (p *PublicKey) Compress() [32]byte {
 	b := p.key.Encode([]byte{})
 	enc := [32]byte{}

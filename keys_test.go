@@ -55,26 +55,29 @@ func TestMiniSecretKey_ExpandEd25519(t *testing.T) {
 }
 
 func TestMiniSecretKey_Public(t *testing.T) {
-	raw := [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2}
+	// test vectors from https://github.com/noot/schnorrkel/blob/master/src/keys.rs#L996
+	raw := [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2}
 	msc, err := NewMiniSecretKeyFromRaw(raw)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	sc := msc.ExpandEd25519()
-	expected, err := hex.DecodeString("1ec20c6cb85bf4c7423b95752b70c312e6ae9e5701ffb310f0a9019d9c041e0af98d66f39442506ff947fd911f18c7a7a5da639a63e8d3b4e233f74143d951c1741c08a06f41c596608f6774259bd9043304adfa5d3eea62760bd9be97634d63")
-	if err != nil {
-		t.Fatal(err)
+	expectedKey := []byte{11, 241, 180, 83, 213, 181, 31, 180, 138, 45, 144, 84, 2, 78, 47, 81, 225, 208, 202, 53, 128, 52, 89, 144, 36, 92, 197, 51, 166, 28, 152, 10}
+	expectedNonce := []byte{69, 121, 245, 84, 53, 88, 241, 101, 252, 126, 198, 17, 237, 114, 215, 135, 224, 58, 4, 75, 134, 169, 226, 109, 76, 133, 25, 135, 115, 81, 176, 46}
+	expectedPubkey := []byte{140, 122, 228, 195, 50, 29, 229, 250, 94, 159, 183, 123, 208, 116, 7, 78, 229, 29, 247, 64, 172, 187, 92, 144, 121, 56, 242, 3, 116, 99, 100, 32}
+
+	if !bytes.Equal(sc.key[:], expectedKey) {
+		t.Errorf("Fail to expand key: got %x expected %x", sc.key, expectedKey)
 	}
 
-	if !bytes.Equal(sc.key[:], expected[:32]) {
-		t.Errorf("Fail to expand key: got %x expected %x", sc.key, expected[:32])
-	}
-
-	if !bytes.Equal(sc.nonce[:], expected[32:64]) {
-		t.Errorf("Fail to expand nonce: got %x expected %x", sc.nonce, expected[32:64])
+	if !bytes.Equal(sc.nonce[:], expectedNonce) {
+		t.Errorf("Fail to expand nonce: got %x expected %x", sc.nonce, expectedNonce)
 	}
 
 	pub := msc.Public().Compress()
-	t.Logf("%x", pub)
+	if !bytes.Equal(pub[:], expectedPubkey) {
+		t.Errorf("Fail to expand pubkey: got %x expected %x", pub, expectedPubkey)
+	}
+
 }
