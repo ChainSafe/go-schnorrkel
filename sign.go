@@ -5,8 +5,6 @@ import (
 	r255 "github.com/noot/ristretto255"
 )
 
-var SigningContext = []byte("substrate")
-
 // Signature holds a schnorrkel signature
 type Signature struct {
 	R *r255.Element
@@ -28,7 +26,7 @@ func NewSigningContext(context, msg []byte) *merlin.Transcript {
 // Schnorr w/ transcript, secret key x:
 // 1. choose random r from group
 // 2. R = gr
-// 3. k = transcript.extract_bytes()
+// 3. k = scalar(transcript.extract_bytes())
 // 4. s = kx + r
 // signature: (R, s)
 // public key used for verification: y = g^x
@@ -73,7 +71,7 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 }
 
 // Verify verifies a schnorr signature with format: (R, s) where y is the public key
-// 1. k = transcript.extract_bytes()
+// 1. k = scalar(transcript.extract_bytes())
 // 2. R' = -ky + gs
 // 3. return R' == R
 func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
@@ -107,8 +105,14 @@ func (s *Signature) Decode(in [64]byte) error {
 	return s.S.Decode(in[32:])
 }
 
-// Encode TODO
+// Encode turns a signature into a byte array
 // see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L77
-func (s *Signature) Encode() ([]byte, error) {
-	return nil, nil
+func (s *Signature) Encode() [64]byte {
+	out := [64]byte{}
+	renc := s.R.Encode([]byte{})
+	copy(out[:32], renc)
+	senc := s.S.Encode([]byte{})
+	copy(out[32:], senc)
+	out[63] |= 128
+	return out
 }

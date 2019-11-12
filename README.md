@@ -5,7 +5,13 @@ Go implementation of the sr25519 signature algorithm (schnorr over ristretto2551
 This library is currently able to create sr25519 keys, import sr25519 keys, and sign and verify messages. It is interoperable with
 the rust implementation. 
 
-Example: key generation and signing:
+### dependencies
+
+go 1.13
+
+### usage
+
+Example: key generation, signing, and verification
 
 ```
 package main 

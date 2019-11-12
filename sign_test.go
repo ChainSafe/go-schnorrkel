@@ -1,6 +1,7 @@
 package schnorrkel
 
 import (
+	"bytes"
 	"encoding/hex"
 	"testing"
 
@@ -25,6 +26,43 @@ func TestSignAndVerify(t *testing.T) {
 		t.Fatalf("Failed to verify")
 	}
 }
+
+func TestSignature_EncodeAndDecode(t *testing.T) {
+	transcript := merlin.NewTranscript("hello")
+	priv, _, err := GenerateKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sig, err := priv.Sign(transcript)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	enc := sig.Encode()
+
+	res := &Signature{}
+	err = res.Decode(enc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s_exp := sig.S.Encode([]byte{})
+	s_res := res.S.Encode([]byte{})
+
+	r_exp := sig.R.Encode([]byte{})
+	r_res := res.R.Encode([]byte{})
+
+	if !bytes.Equal(s_exp, s_res) {
+		t.Fatalf("Fail: got %v expected %v", s_res, s_exp)
+	}
+
+	if !bytes.Equal(r_exp, r_res) {
+		t.Fatalf("Fail: got %v expected %v", r_res, r_exp)
+	}
+}
+
+var SigningContext = []byte("substrate")
 
 func TestVerify_rust(t *testing.T) {
 	// test vectors from https://github.com/Warchant/sr25519-crust/blob/master/test/ds.cpp#L48
