@@ -81,3 +81,43 @@ func TestMiniSecretKey_Public(t *testing.T) {
 	}
 
 }
+
+func TestPublicKey_Decode(t *testing.T) {
+	// test vectors from https://github.com/Warchant/sr25519-crust/blob/master/test/ds.cpp#L48
+	pubhex, err := hex.DecodeString("46ebddef8cd9bb167dc30878d7113b7e168e6f0646beffd77d69d39bad76b47a")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	in := [32]byte{}
+	copy(in[:], pubhex)
+
+	pub := &PublicKey{}
+	err = pub.Decode(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	privhex, err := hex.DecodeString("05d65584630d16cd4af6d0bec10f34bb504a5dcb62dba2122d49f5a663763d0a")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	copy(in[:], privhex)
+	priv := &SecretKey{}
+	err = priv.Decode(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected, err := priv.Public()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pubcmp := pub.Compress()
+	expcmp := expected.Compress()
+	if !bytes.Equal(pubcmp[:], expcmp[:]) {
+		t.Fatalf("Fail: got %x expected %x", pubcmp, expcmp)
+	}
+}

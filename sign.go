@@ -5,10 +5,21 @@ import (
 	r255 "github.com/noot/ristretto255"
 )
 
+var SigningContext = []byte("substrate")
+
 // Signature holds a schnorrkel signature
 type Signature struct {
 	R *r255.Element
 	S *r255.Scalar
+}
+
+// NewSigningContext returns a new transcript initialized with the context for the signature
+//.see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/context.rs#L183
+func NewSigningContext(context, msg []byte) *merlin.Transcript {
+	t := merlin.NewTranscript("SigningContext")
+	t.AppendMessage([]byte(""), context)
+	t.AppendMessage([]byte("sign-bytes"), msg)
+	return t
 }
 
 // Sign uses the schnorr signature algorithm to sign a message
@@ -32,11 +43,11 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 
-	// note: TODO: merlin library doesn't have build_rng yet. this is cannot yet be completed
-	// need to add nonce to calculation: see https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/context.rs#L153
+	// note: TODO: merlin library doesn't have build_rng yet.
+	// see https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/context.rs#L153
 	// r := t.ExtractBytes([]byte("signing"), 32)
 
-	// choose random r
+	// choose random r (nonce)
 	r, err := NewRandomScalar()
 	if err != nil {
 		return nil, err
@@ -81,4 +92,23 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 	Rp = Rp.Subtract(Rp, ky)
 
 	return Rp.Equal(s.R) == 1
+}
+
+// Decode sets a Signature from bytes
+// see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L100
+func (s *Signature) Decode(in [64]byte) error {
+	s.R = r255.NewElement()
+	err := s.R.Decode(in[:32])
+	if err != nil {
+		return err
+	}
+	in[63] &= 127
+	s.S = r255.NewScalar()
+	return s.S.Decode(in[32:])
+}
+
+// Encode TODO
+// see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L77
+func (s *Signature) Encode() ([]byte, error) {
+	return nil, nil
 }
