@@ -122,11 +122,17 @@ func (s *MiniSecretKey) Public() *PublicKey {
 	return &PublicKey{key: e.ScalarBaseMult(skey)}
 }
 
+// Decode forms the secret key from the input bytes
 func (s *SecretKey) Decode(in [32]byte) error {
 	// s.key = r255.NewScalar()
 	// return s.key.Decode(in[:])
 	s.key = in
 	return nil
+}
+
+// Encode returns the secret key as bytes
+func (s *SecretKey) Encode() [32]byte {
+	return s.key
 }
 
 // Public gets the public key corresponding to this secret key
@@ -150,4 +156,9 @@ func (p *PublicKey) Compress() [32]byte {
 	enc := [32]byte{}
 	copy(enc[:], b)
 	return enc
+}
+
+// Encode is a wrapper around compress
+func (p *PublicKey) Encode() [32]byte {
+	return p.Compress()
 }
