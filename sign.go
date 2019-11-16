@@ -1,8 +1,8 @@
 package schnorrkel
 
 import (
+	r255 "github.com/gtank/ristretto255"
 	"github.com/noot/merlin"
-	r255 "github.com/noot/ristretto255"
 )
 
 // Signature holds a schnorrkel signature

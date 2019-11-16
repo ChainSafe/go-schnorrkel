@@ -1,3 +1,5 @@
+github.com/gtank/ristretto255 v0.1.0 h1:WQKpyRsq8Yt7dm0oq6Gj18BGku/Zbj/TOIolBYfmbiI=
+github.com/gtank/ristretto255 v0.1.0/go.mod h1:Ph5OpO6c7xKUGROZfWVLiJf9icMDwUeIvY4OmlYW69o=
 github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643 h1:hLDRPB66XQT/8+wG9WsDpiCvZf1yKO7sz7scAjSlBa0=
 github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643/go.mod h1:43+3pMjjKimDBf5Kr4ZFNGbLql1zKkbImw+fZbw3geM=
 github.com/noot/merlin v0.1.1-0.20191025171753-7518b1bd639f h1:HufHguFFu+tJmJszBWjzBvlXKMtei8yWXF9YZURfssA=

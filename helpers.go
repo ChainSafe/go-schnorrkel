@@ -3,7 +3,7 @@ package schnorrkel
 import (
 	"crypto/rand"
 
-	r255 "github.com/noot/ristretto255"
+	r255 "github.com/gtank/ristretto255"
 )
 
 // https://github.com/w3f/schnorrkel/blob/718678e51006d84c7d8e4b6cde758906172e74f8/src/scalars.rs#L18
@@ -53,6 +53,5 @@ func ScalarFromBytes(b [32]byte) (*r255.Scalar, error) {
 		return nil, err
 	}
 
-	s.Reduce()
 	return s, nil
 }

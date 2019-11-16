@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 
+	r255 "github.com/gtank/ristretto255"
 	"github.com/noot/merlin"
-	r255 "github.com/noot/ristretto255"
 )
 
 // MiniSecretKey is a secret scalar
@@ -51,8 +51,6 @@ func NewMiniSecretKeyFromRaw(b [32]byte) (*MiniSecretKey, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	s.Reduce()
 
 	return &MiniSecretKey{key: s}, nil
 }
@@ -124,8 +122,6 @@ func (s *MiniSecretKey) Public() *PublicKey {
 
 // Decode forms the secret key from the input bytes
 func (s *SecretKey) Decode(in [32]byte) error {
-	// s.key = r255.NewScalar()
-	// return s.key.Decode(in[:])
 	s.key = in
 	return nil
 }
