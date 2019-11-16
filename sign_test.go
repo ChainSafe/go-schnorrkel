@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/noot/merlin"
+	"github.com/gtank/merlin"
 )
 
 func TestSignAndVerify(t *testing.T) {

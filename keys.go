@@ -5,7 +5,7 @@ import (
 	"crypto/sha512"
 
 	r255 "github.com/gtank/ristretto255"
-	"github.com/noot/merlin"
+	"github.com/gtank/merlin"
 )
 
 // MiniSecretKey is a secret scalar
