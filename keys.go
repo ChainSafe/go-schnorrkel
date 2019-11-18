@@ -4,13 +4,13 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 
-	r255 "github.com/gtank/ristretto255"
 	"github.com/gtank/merlin"
+	r255 "github.com/gtank/ristretto255"
 )
 
 // MiniSecretKey is a secret scalar
 type MiniSecretKey struct {
-	key *r255.Scalar
+	key [32]byte
 }
 
 // SecretKey consists of a secret scalar and a signing nonce
@@ -26,14 +26,11 @@ type PublicKey struct {
 
 // GenerateKeypair generates a new schnorrkel secret key and public key
 func GenerateKeypair() (*SecretKey, *PublicKey, error) {
-	s := [64]byte{}
-	_, err := rand.Read(s[:])
+	// decodes priv bytes as little-endian
+	msc, err := NewRandomMiniSecretKey()
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// decodes priv bytes as little-endian
-	msc := NewMiniSecretKey(s)
 	return msc.ExpandEd25519(), msc.Public(), nil
 }
 
@@ -41,31 +38,27 @@ func GenerateKeypair() (*SecretKey, *PublicKey, error) {
 func NewMiniSecretKey(b [64]byte) *MiniSecretKey {
 	s := r255.NewScalar()
 	s.FromUniformBytes(b[:])
-	return &MiniSecretKey{key: s}
+	enc := s.Encode([]byte{})
+	sk := [32]byte{}
+	copy(sk[:], enc)
+	return &MiniSecretKey{key: sk}
 }
 
 // NewMiniSecretKeyFromRaw derives a mini secret key from little-endian encoded raw bytes.
 func NewMiniSecretKeyFromRaw(b [32]byte) (*MiniSecretKey, error) {
-	s := r255.NewScalar()
-	err := s.Decode(b[:])
-	if err != nil {
-		return nil, err
-	}
-
+	s := b
 	return &MiniSecretKey{key: s}, nil
 }
 
 // NewRandomMiniSecretKey generates a mini secret key from random
 func NewRandomMiniSecretKey() (*MiniSecretKey, error) {
-	s := [64]byte{}
+	s := [32]byte{}
 	_, err := rand.Read(s[:])
 	if err != nil {
 		return nil, err
 	}
 
-	scpriv := r255.NewScalar()
-	scpriv.FromUniformBytes(s[:])
-	return &MiniSecretKey{key: scpriv}, nil
+	return &MiniSecretKey{key: s}, nil
 }
 
 func (s *MiniSecretKey) Decode(in [32]byte) (err error) {
@@ -76,7 +69,7 @@ func (s *MiniSecretKey) Decode(in [32]byte) (err error) {
 // ExpandUniform
 func (s *MiniSecretKey) ExpandUniform() *SecretKey {
 	t := merlin.NewTranscript("ExpandSecretKeys")
-	t.AppendMessage([]byte("mini"), s.key.Encode([]byte{}))
+	t.AppendMessage([]byte("mini"), s.key[:])
 	scalarBytes := t.ExtractBytes([]byte("sk"), 64)
 	key := r255.NewScalar()
 	key.FromUniformBytes(scalarBytes[:])
@@ -94,7 +87,7 @@ func (s *MiniSecretKey) ExpandUniform() *SecretKey {
 // ExpandEd25519 expands a mini secret key into a secret key
 // https://github.com/w3f/schnorrkel/blob/43f7fc00724edd1ef53d5ae13d82d240ed6202d5/src/keys.rs#L196
 func (s *MiniSecretKey) ExpandEd25519() *SecretKey {
-	h := sha512.Sum512(s.key.Encode([]byte{}))
+	h := sha512.Sum512(s.key[:])
 	sk := &SecretKey{key: [32]byte{}, nonce: [32]byte{}}
 
 	copy(sk.key[:], h[:32])
