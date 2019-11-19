@@ -121,3 +121,12 @@ func TestPublicKey_Decode(t *testing.T) {
 		t.Fatalf("Fail: got %x expected %x", pubcmp, expcmp)
 	}
 }
+
+func TestNewPublicKey(t *testing.T) {
+	pub := [32]byte{140, 122, 228, 195, 50, 29, 229, 250, 94, 159, 183, 123, 208, 116, 7, 78, 229, 29, 247, 64, 172, 187, 92, 144, 121, 56, 242, 3, 116, 99, 100, 32}
+	pk := NewPublicKey(pub)
+	enc := pk.Encode()
+	if !bytes.Equal(enc[:], pub[:]) {
+		t.Fatalf("Fail: got %x expected %x", pub, enc)
+	}
+}

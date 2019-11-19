@@ -61,6 +61,12 @@ func NewRandomMiniSecretKey() (*MiniSecretKey, error) {
 	return &MiniSecretKey{key: s}, nil
 }
 
+func NewPublicKey(b [32]byte) *PublicKey {
+	e := r255.NewElement()
+	e.Decode(b[:])
+	return &PublicKey{key: e}
+}
+
 func (s *MiniSecretKey) Decode(in [32]byte) (err error) {
 	s, err = NewMiniSecretKeyFromRaw(in)
 	return err
