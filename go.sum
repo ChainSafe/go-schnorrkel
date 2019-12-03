@@ -1,12 +1,6 @@
 github.com/gtank/merlin v0.1.1-0.20191105220539-8318aed1a79f h1:8N8XWLZelZNibkhM1FuF+3Ad3YIbgirjdMiVA0eUkaM=
 github.com/gtank/merlin v0.1.1-0.20191105220539-8318aed1a79f/go.mod h1:T86dnYJhcGOh5BjZFCJWTDeTK7XW8uE+E21Cy/bIQ+s=
-github.com/gtank/ristretto255 v0.1.0 h1:WQKpyRsq8Yt7dm0oq6Gj18BGku/Zbj/TOIolBYfmbiI=
-github.com/gtank/ristretto255 v0.1.0/go.mod h1:Ph5OpO6c7xKUGROZfWVLiJf9icMDwUeIvY4OmlYW69o=
+github.com/gtank/ristretto255 v0.1.2 h1:JEqUCPA1NvLq5DwYtuzigd7ss8fwbYay9fi4/5uMzcc=
+github.com/gtank/ristretto255 v0.1.2/go.mod h1:Ph5OpO6c7xKUGROZfWVLiJf9icMDwUeIvY4OmlYW69o=
 github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643 h1:hLDRPB66XQT/8+wG9WsDpiCvZf1yKO7sz7scAjSlBa0=
 github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643/go.mod h1:43+3pMjjKimDBf5Kr4ZFNGbLql1zKkbImw+fZbw3geM=
-github.com/noot/merlin v0.1.1-0.20191025171753-7518b1bd639f h1:HufHguFFu+tJmJszBWjzBvlXKMtei8yWXF9YZURfssA=
-github.com/noot/merlin v0.1.1-0.20191025171753-7518b1bd639f/go.mod h1:kotgIuZmGF48jEtqOx+KOHUmoiZqfmXxgyB0W+q8ZXQ=
-github.com/noot/ristretto255 v0.1.1 h1:s+QEp0e54J8B5lWFBrEzIk13UnbVdefAZGL3O7ZnqWk=
-github.com/noot/ristretto255 v0.1.1/go.mod h1:THj5WHKyqK/NWhqqlBOO1lgc2oxOsU830bdH45yT0do=
-github.com/noot/ristretto255 v0.1.2-0.20191025161806-eb93fbbcd21d h1:UKHmFJsWf6Rl93f7W6DtzunX7Kuor9oCA2oUCkIKxbE=
-github.com/noot/ristretto255 v0.1.2-0.20191025161806-eb93fbbcd21d/go.mod h1:THj5WHKyqK/NWhqqlBOO1lgc2oxOsU830bdH45yT0do=
