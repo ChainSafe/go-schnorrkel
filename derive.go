@@ -9,29 +9,29 @@ import (
 
 const ChainCodeLength = 32
 
-// DerivableKey implemented DeriveKey
+// DerivableKey implementes DeriveKey
 type DerivableKey interface {
 	Encode() [32]byte
 	Decode([32]byte) error
-	DeriveKey(*merlin.Transcript, [32]byte) (*ExtendedKey, error)
+	DeriveKey(*merlin.Transcript, [ChainCodeLength]byte) (*ExtendedKey, error)
 }
 
 // ExtendedKey consists of a DerivableKey which can be a schnorrkel public or private key
 // as well as chain code
 type ExtendedKey struct {
 	key       DerivableKey
-	chaincode [32]byte
+	chaincode [ChainCodeLength]byte
 }
 
-// DeriveKeySimple ...
-func DeriveKeySimple(key DerivableKey, i []byte, cc [32]byte) (*ExtendedKey, error) {
+// DeriveKeySimple derives a subkey identified by byte array i and chain code.
+func DeriveKeySimple(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
 	t := merlin.NewTranscript("SchnorrRistrettoHDKD")
 	t.AppendMessage([]byte("sign-bytes"), i)
 	return key.DeriveKey(t, cc)
 }
 
 // DeriveKey derives a new secret key and chain code from an existing secret key and chain code
-func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [32]byte) (*ExtendedKey, error) {
+func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
 	pub, err := sk.Public()
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [32]byte) (*ExtendedKey,
 	}, nil
 }
 
-func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [32]byte) (*ExtendedKey, error) {
+func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
 	sc, dcc := pk.DeriveScalarAndChaincode(t, cc)
 
 	// derivedPk = pk + (sc * g)
@@ -91,7 +91,7 @@ func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
 }
 
 // DeriveScalarAndChaincode derives a new scalar and chain code from an existing public key and chain code
-func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [32]byte) (*r255.Scalar, [32]byte) {
+func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCodeLength]byte) (*r255.Scalar, [ChainCodeLength]byte) {
 	t.AppendMessage([]byte("chain-code"), cc[:])
 	pkenc := pk.Encode()
 	t.AppendMessage([]byte("public-key"), pkenc[:])
@@ -100,8 +100,8 @@ func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [32]byte)
 	sc := r255.NewScalar()
 	sc.FromUniformBytes(scBytes)
 
-	ccBytes := t.ExtractBytes([]byte("HDKD-chaincode"), 32)
-	ccRes := [32]byte{}
+	ccBytes := t.ExtractBytes([]byte("HDKD-chaincode"), ChainCodeLength)
+	ccRes := [ChainCodeLength]byte{}
 	copy(ccRes[:], ccBytes)
 	return sc, ccRes
 }
