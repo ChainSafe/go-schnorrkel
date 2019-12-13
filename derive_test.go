@@ -2,6 +2,7 @@ package schnorrkel
 
 import (
 	"bytes"
+	"encoding/hex"
 	"testing"
 
 	"golang.org/x/crypto/blake2b"
@@ -68,5 +69,47 @@ func TestDerivePublicAndPrivateMatch(t *testing.T) {
 	ok := dpub.key.(*PublicKey).Verify(sig, verifyTranscript)
 	if !ok {
 		t.Fatal("did not verify")
+	}
+}
+
+func TestDerive_rust(t *testing.T) {
+	// test vectors from https://github.com/Warchant/sr25519-crust/blob/master/test/derive.cpp#L32
+	kp, err := hex.DecodeString("4c1250e05afcd79e74f6c035aee10248841090e009b6fd7ba6a98d5dc743250cafa4b32c608e3ee2ba624850b3f14c75841af84b16798bf1ee4a3875aa37a2cee661e416406384fe1ca091980958576d2bff7c461636e9f22c895f444905ea1f")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cc, err := hex.DecodeString("0c666f6f00000000000000000000000000000000000000000000000000000000")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	privBytes := [32]byte{}
+	copy(privBytes[:], kp[:32])
+	priv := new(SecretKey)
+	err = priv.Decode(privBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ccBytes := [32]byte{}
+	copy(ccBytes[:], cc)
+	derived, err := DeriveKeySimple(priv, []byte{}, ccBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedPub, err := hex.DecodeString("b21e5aabeeb35d6a1bf76226a6c65cd897016df09ef208243e59eed2401f5357")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resultPub, err := derived.Public()
+	if err != nil {
+		t.Fatal(err)
+	}
+	resultPubBytes := resultPub.Encode()
+	if !bytes.Equal(expectedPub, resultPubBytes[:]) {
+		t.Fatalf("Fail: got %x expected %x", resultPubBytes, expectedPub)
 	}
 }
