@@ -2,6 +2,7 @@ package schnorrkel
 
 import (
 	"crypto/rand"
+	"errors"
 
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
@@ -21,6 +22,44 @@ type DerivableKey interface {
 type ExtendedKey struct {
 	key       DerivableKey
 	chaincode [ChainCodeLength]byte
+}
+
+// Key returns the schnorrkel key underlying the ExtendedKey
+func (ek *ExtendedKey) Key() DerivableKey {
+	return ek.key
+}
+
+// ChainCode returns the chain code underlying the ExtendedKey
+func (ek *ExtendedKey) ChainCode() [ChainCodeLength]byte {
+	return ek.chaincode
+}
+
+// Secret returns the SecretKey underlying the ExtendedKey
+// if it's not a secret key, it returns an error
+func (ek *ExtendedKey) Secret() (*SecretKey, error) {
+	if priv, ok := ek.key.(*SecretKey); ok {
+		return priv, nil
+	}
+
+	return nil, errors.New("extended key is not a secret key")
+}
+
+// Public returns the PublicKey underlying the ExtendedKey
+func (ek *ExtendedKey) Public() (*PublicKey, error) {
+	if pub, ok := ek.key.(*PublicKey); ok {
+		return pub, nil
+	}
+
+	if priv, ok := ek.key.(*SecretKey); ok {
+		return priv.Public()
+	}
+
+	return nil, errors.New("extended key is not a valid public or private key")
+}
+
+// DeriveKey derives an extended key from an extended key
+func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
+	return ek.key.DeriveKey(t, ek.chaincode)
 }
 
 // DeriveKeySimple derives a subkey identified by byte array i and chain code.
@@ -84,10 +123,6 @@ func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 		key:       pub,
 		chaincode: dcc,
 	}, nil
-}
-
-func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
-	return ek.key.DeriveKey(t, ek.chaincode)
 }
 
 // DeriveScalarAndChaincode derives a new scalar and chain code from an existing public key and chain code
