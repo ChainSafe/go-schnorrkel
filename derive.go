@@ -69,11 +69,25 @@ func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [32]byte) (*ExtendedKey,
 }
 
 func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [32]byte) (*ExtendedKey, error) {
-	return nil, nil
+	sc, dcc := pk.DeriveScalarAndChaincode(t, cc)
+
+	// derivedPk = pk + (sc * g)
+	p1 := r255.NewElement().ScalarBaseMult(sc)
+	p2 := r255.NewElement()
+	p2.Add(pk.key, p1)
+
+	pub := &PublicKey{
+		key: p2,
+	}
+
+	return &ExtendedKey{
+		key:       pub,
+		chaincode: dcc,
+	}, nil
 }
 
 func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
-	return nil, nil
+	return ek.key.DeriveKey(t, ek.chaincode)
 }
 
 // DeriveScalarAndChaincode derives a new scalar and chain code from an existing public key and chain code
