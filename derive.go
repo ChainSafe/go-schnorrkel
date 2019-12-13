@@ -10,7 +10,7 @@ import (
 
 const ChainCodeLength = 32
 
-// DerivableKey implementes DeriveKey
+// DerivableKey implements DeriveKey
 type DerivableKey interface {
 	Encode() [32]byte
 	Decode([32]byte) error
@@ -22,6 +22,14 @@ type DerivableKey interface {
 type ExtendedKey struct {
 	key       DerivableKey
 	chaincode [ChainCodeLength]byte
+}
+
+// NewExtendedKey creates an ExtendedKey given a DerivableKey and chain code
+func NewExtendedKey(k DerivableKey, cc [ChainCodeLength]byte) *ExtendedKey {
+	return &ExtendedKey{
+		key:       k,
+		chaincode: cc,
+	}
 }
 
 // Key returns the schnorrkel key underlying the ExtendedKey
