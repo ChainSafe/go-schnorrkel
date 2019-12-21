@@ -72,6 +72,10 @@ func (s *MiniSecretKey) Decode(in [32]byte) (err error) {
 	return err
 }
 
+func (s *MiniSecretKey) Encode() [32]byte {
+	return s.key
+}
+
 // ExpandUniform
 func (s *MiniSecretKey) ExpandUniform() *SecretKey {
 	t := merlin.NewTranscript("ExpandSecretKeys")
