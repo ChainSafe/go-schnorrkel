@@ -6,7 +6,7 @@ import (
 )
 
 type VrfInOut struct {
-	input *r255.Element
+	input  *r255.Element
 	output *r255.Element
 }
 
@@ -22,14 +22,16 @@ func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error)
 	}
 
 	t0 := merlin.NewTranscript("VRF")
-	proof, err := sk.ProduceProof(t0, p)
+	proof, err := sk.DleqProve(t0, p)
 	if err != nil {
 		return nil, nil, err
 	}
 	return p, proof, nil
 }
 
-func (sk *SecretKey) ProduceProof(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
+// DleqProve creates a VRF proof for the transcript and input with this secret key.
+// see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L604
+func (sk *SecretKey) DleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
 
@@ -43,9 +45,31 @@ func (sk *SecretKey) ProduceProof(t *merlin.Transcript, p *VrfInOut) (*VrfProof,
 	t.AppendMessage([]byte("vrf:R=g^r"), R.Encode([]byte{}))
 
 	// create hr := HashToElement(input)
-	//hr := r255.NewElement().ScalarMult(r, p.input).Encode([]byte{})
+	hr := r255.NewElement().ScalarMult(r, p.input).Encode([]byte{})
+	t.AppendMessage([]byte("vrf:h^r"), hr)
 
-	return nil, nil
+	pub, err := sk.Public()
+	if err != nil {
+		return nil, err
+	}
+	pubenc := pub.Encode()
+	t.AppendMessage([]byte("vrf:pk"), pubenc[:])
+	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
+
+	c := challengeScalar(t, []byte("prove"))
+	s := r255.NewScalar()
+	sc, err := ScalarFromBytes(sk.key)
+	if err != nil {
+		return nil, err
+	}
+	s.Subtract(r, r255.NewScalar().Multiply(c, sc))
+
+	// TODO: zero r
+
+	return &VrfProof{
+		c: c,
+		s: s,
+	}, nil
 }
 
 // VrfCreateHash creates a VRF input/output pair on the given transcript.
@@ -65,12 +89,41 @@ func (sk *SecretKey) VrfCreateHash(t *merlin.Transcript) (*VrfInOut, error) {
 	output.ScalarMult(sc, input)
 
 	return &VrfInOut{
-		input: input,
+		input:  input,
 		output: output,
 	}, nil
 }
 
-// VrfHash creates a VRF input point by hashing the transcript to a point.
+func (pk *PublicKey) DleqVerify(t *merlin.Transcript, p *VrfInOut, proof *VrfProof) (bool, error) {
+	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
+	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
+
+	// R = proof.c*pk + proof.s*g
+	R := r255.NewElement()
+	R.VarTimeDoubleScalarBaseMult(proof.c, pk.key, proof.s)
+	t.AppendMessage([]byte("vrf:R=g^r"), R.Encode([]byte{}))
+
+	// hr = proof.c * p.output + proof.s * p.input
+	hr := r255.NewElement().VarTimeMultiScalarMult([]*r255.Scalar{proof.c, proof.s}, []*r255.Element{p.output, p.input})
+	t.AppendMessage([]byte("vrf:h^r"), hr.Encode([]byte{}))
+	t.AppendMessage([]byte("vrf:pk"), pk.key.Encode([]byte{}))
+	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
+
+	cexpected := challengeScalar(t, []byte("prove"))
+	if cexpected.Equal(proof.c) == 1 {
+		return true, nil
+	}
+
+	return false, nil
+
+}
+
+func (pk *PublicKey) VrfVerify(t *merlin.Transcript, inout *VrfInOut, proof *VrfProof) (bool, error) {
+	t0 := merlin.NewTranscript("VRF")
+	return pk.DleqVerify(t0, inout, proof)
+}
+
+// VrfHash hashes the transcript to a point.
 func (pk *PublicKey) VrfHash(t *merlin.Transcript) *r255.Element {
 	mt := TranscriptWithMalleabilityAddressed(t, pk)
 	hash := mt.ExtractBytes([]byte("VRFHash"), 64)

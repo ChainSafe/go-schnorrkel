@@ -3,8 +3,16 @@ package schnorrkel
 import (
 	"crypto/rand"
 
+	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
+
+func challengeScalar(t *merlin.Transcript, msg []byte) *r255.Scalar {
+	scb := t.ExtractBytes(msg, 64)
+	sc := r255.NewScalar()
+	sc.FromUniformBytes(scb)
+	return sc
+}
 
 // https://github.com/w3f/schnorrkel/blob/718678e51006d84c7d8e4b6cde758906172e74f8/src/scalars.rs#L18
 func divideScalarByCofactor(s []byte) []byte {
