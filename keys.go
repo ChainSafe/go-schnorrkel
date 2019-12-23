@@ -50,8 +50,8 @@ func NewMiniSecretKeyFromRaw(b [32]byte) (*MiniSecretKey, error) {
 	return &MiniSecretKey{key: s}, nil
 }
 
-// NewRandomMiniSecretKey generates a mini secret key from random
-func NewRandomMiniSecretKey() (*MiniSecretKey, error) {
+// GenerateMiniSecretKey generates a mini secret key from random
+func GenerateMiniSecretKey() (*MiniSecretKey, error) {
 	s := [32]byte{}
 	_, err := rand.Read(s[:])
 	if err != nil {
@@ -61,6 +61,15 @@ func NewRandomMiniSecretKey() (*MiniSecretKey, error) {
 	return &MiniSecretKey{key: s}, nil
 }
 
+// NewSecretKey creates a new secret key from input bytes
+func NewSecretKey(key [32]byte, nonce [32]byte) *SecretKey {
+	return &SecretKey{
+		key:   key,
+		nonce: nonce,
+	}
+}
+
+// NewPublicKey creates a new public key from input bytes
 func NewPublicKey(b [32]byte) *PublicKey {
 	e := r255.NewElement()
 	e.Decode(b[:])
