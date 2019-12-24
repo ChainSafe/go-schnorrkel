@@ -5,6 +5,8 @@ Go implementation of the sr25519 signature algorithm (schnorr over ristretto2551
 This library is currently able to create sr25519 keys, import sr25519 keys, and sign and verify messages. It is interoperable with
 the rust implementation. 
 
+The BIP39 implementation in this library is compatible with the rust [substrate-bip39](https://github.com/paritytech/substrate-bip39) implementation.  Note that this is not a standard bip39 implementation.
+
 ### dependencies
 
 go 1.13
