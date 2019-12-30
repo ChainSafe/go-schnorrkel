@@ -26,7 +26,7 @@ func (io *VrfInOut) Output() *VrfOutput {
 	}
 }
 
-// EncodeOutput returns the encoding of the input and output concatenated
+// EncodeOutput returns the 64-byte encoding of the input and output concatenated
 func (io *VrfInOut) Encode() []byte {
 	outbytes := [32]byte{}
 	copy(outbytes[:], io.output.Encode([]byte{}))
@@ -58,6 +58,15 @@ func (out *VrfOutput) Encode() [32]byte {
 	outbytes := [32]byte{}
 	copy(outbytes[:], out.output.Encode([]byte{}))
 	return outbytes
+}
+
+// Encode returns a 64-byte encoded VrfProof
+func (p *VrfProof) Encode() []byte {
+	cbytes := [32]byte{}
+	copy(cbytes[:], p.c.Encode([]byte{}))
+	sbytes := [32]byte{}
+	copy(sbytes[:], p.s.Encode([]byte{}))
+	return append(cbytes[:], sbytes[:]...)
 }
 
 // VrfSign returns a vrf output and proof given a secret key and transcript.
