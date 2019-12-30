@@ -27,7 +27,7 @@ type PublicKey struct {
 // GenerateKeypair generates a new schnorrkel secret key and public key
 func GenerateKeypair() (*SecretKey, *PublicKey, error) {
 	// decodes priv bytes as little-endian
-	msc, err := NewRandomMiniSecretKey()
+	msc, err := GenerateMiniSecretKey()
 	if err != nil {
 		return nil, nil, err
 	}
