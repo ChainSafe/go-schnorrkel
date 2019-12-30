@@ -26,11 +26,13 @@ func (io *VrfInOut) Output() *VrfOutput {
 	}
 }
 
-// EncodeOutput returns the 32-byte encoding of the output
-func (io *VrfInOut) EncodeOutput() [32]byte {
+// EncodeOutput returns the encoding of the input and output concatenated
+func (io *VrfInOut) Encode() []byte {
 	outbytes := [32]byte{}
 	copy(outbytes[:], io.output.Encode([]byte{}))
-	return outbytes
+	inbytes := [32]byte{}
+	copy(inbytes[:], io.input.Encode([]byte{}))
+	return append(inbytes[:], outbytes[:]...)
 }
 
 // NewOutput creates a new VRF output from a 64-byte element
@@ -46,9 +48,16 @@ func NewOutput(in [32]byte) *VrfOutput {
 func (out *VrfOutput) AttachInput(pub *PublicKey, t *merlin.Transcript) *VrfInOut {
 	input := pub.vrfHash(t)
 	return &VrfInOut{
-		input: input,
+		input:  input,
 		output: out.output,
 	}
+}
+
+// Encode returns the 32-byte encoding of the output
+func (out *VrfOutput) Encode() [32]byte {
+	outbytes := [32]byte{}
+	copy(outbytes[:], out.output.Encode([]byte{}))
+	return outbytes
 }
 
 // VrfSign returns a vrf output and proof given a secret key and transcript.

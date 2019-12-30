@@ -20,7 +20,7 @@ func TestInputAndOutput(t *testing.T) {
 	inout, proof, err := priv.VrfSign(signTranscript)
 	if err != nil {
 		t.Fatal(err)
-	}	
+	}
 
 	outslice := inout.output.Encode([]byte{})
 	outbytes := [32]byte{}
