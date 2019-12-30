@@ -10,9 +10,45 @@ type VrfInOut struct {
 	output *r255.Element
 }
 
+type VrfOutput struct {
+	output *r255.Element
+}
+
 type VrfProof struct {
 	c *r255.Scalar
 	s *r255.Scalar
+}
+
+// Output returns a VrfOutput from a VrfInOut
+func (io *VrfInOut) Output() *VrfOutput {
+	return &VrfOutput{
+		output: io.output,
+	}
+}
+
+// EncodeOutput returns the 32-byte encoding of the output
+func (io *VrfInOut) EncodeOutput() [32]byte {
+	outbytes := [32]byte{}
+	copy(outbytes[:], io.output.Encode([]byte{}))
+	return outbytes
+}
+
+// NewOutput creates a new VRF output from a 64-byte element
+func NewOutput(in [32]byte) *VrfOutput {
+	output := r255.NewElement()
+	output.Decode(in[:])
+	return &VrfOutput{
+		output: output,
+	}
+}
+
+// AttachInput returns a VrfInOut pair from an output
+func (out *VrfOutput) AttachInput(pub *PublicKey, t *merlin.Transcript) *VrfInOut {
+	input := pub.vrfHash(t)
+	return &VrfInOut{
+		input: input,
+		output: out.output,
+	}
 }
 
 // VrfSign returns a vrf output and proof given a secret key and transcript.
@@ -64,8 +100,6 @@ func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, er
 		return nil, err
 	}
 	s.Subtract(r, r255.NewScalar().Multiply(c, sc))
-
-	// TODO: zero r
 
 	return &VrfProof{
 		c: c,
@@ -123,7 +157,6 @@ func (pk *PublicKey) dleqVerify(t *merlin.Transcript, p *VrfInOut, proof *VrfPro
 	}
 
 	return false, nil
-
 }
 
 // vrfHash hashes the transcript to a point.
