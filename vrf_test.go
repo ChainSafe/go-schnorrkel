@@ -7,6 +7,37 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
+func TestInputAndOutput(t *testing.T) {
+	signTranscript := merlin.NewTranscript("vrf-test")
+	inoutTranscript := merlin.NewTranscript("vrf-test")
+	verifyTranscript := merlin.NewTranscript("vrf-test")
+
+	priv, pub, err := GenerateKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	inout, proof, err := priv.VrfSign(signTranscript)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	outslice := inout.output.Encode([]byte{})
+	outbytes := [32]byte{}
+	copy(outbytes[:], outslice)
+	out := NewOutput(outbytes)
+	inout2 := out.AttachInput(pub, inoutTranscript)
+
+	ok, err := pub.VrfVerify(verifyTranscript, inout2, proof)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !ok {
+		t.Fatal("did not verify vrf")
+	}
+}
+
 func TestVRFSignAndVerify(t *testing.T) {
 	signTranscript := merlin.NewTranscript("vrf-test")
 	verifyTranscript := merlin.NewTranscript("vrf-test")
