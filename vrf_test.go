@@ -1,6 +1,7 @@
 package schnorrkel
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/gtank/merlin"
@@ -35,6 +36,48 @@ func TestInputAndOutput(t *testing.T) {
 
 	if !ok {
 		t.Fatal("did not verify vrf")
+	}
+}
+
+func TestOutput_EncodeAndDecode(t *testing.T) {
+	o, err := NewRandomElement()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := &VrfOutput{
+		output: o,
+	}
+
+	enc := out.Encode()
+	out2 := new(VrfOutput)
+	out2.Decode(enc)
+	enc2 := out2.Encode()
+	if !bytes.Equal(enc[:], enc2[:]) {
+		t.Fatalf("Fail: got %v expected %v", out.Encode(), out2.Encode())
+	}
+}
+
+func TestProof_EncodeAndDecode(t *testing.T) {
+	c, err := NewRandomScalar()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := NewRandomScalar()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	proof := &VrfProof{
+		c: c,
+		s: s,
+	}
+
+	enc := proof.Encode()
+	proof2 := new(VrfProof)
+	proof2.Decode(enc)
+	enc2 := proof2.Encode()
+	if !bytes.Equal(enc[:], enc2[:]) {
+		t.Fatalf("Fail: got %v expected %v", proof.Encode(), proof2.Encode())
 	}
 }
 
