@@ -50,7 +50,10 @@ func TestOutput_EncodeAndDecode(t *testing.T) {
 
 	enc := out.Encode()
 	out2 := new(VrfOutput)
-	out2.Decode(enc)
+	err = out2.Decode(enc)
+	if err != nil {
+		t.Fatal(err)
+	}
 	enc2 := out2.Encode()
 	if !bytes.Equal(enc[:], enc2[:]) {
 		t.Fatalf("Fail: got %v expected %v", out.Encode(), out2.Encode())
@@ -74,7 +77,11 @@ func TestProof_EncodeAndDecode(t *testing.T) {
 
 	enc := proof.Encode()
 	proof2 := new(VrfProof)
-	proof2.Decode(enc)
+	err = proof2.Decode(enc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	enc2 := proof2.Encode()
 	if !bytes.Equal(enc[:], enc2[:]) {
 		t.Fatalf("Fail: got %v expected %v", proof.Encode(), proof2.Encode())
