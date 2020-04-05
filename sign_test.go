@@ -27,6 +27,31 @@ func TestSignAndVerify(t *testing.T) {
 	}
 }
 
+func TestVerify(t *testing.T) {
+	transcript := merlin.NewTranscript("hello")
+	priv, pub, err := GenerateKeypair()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sig, err := priv.Sign(transcript)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	transcript2 := merlin.NewTranscript("hello")
+	ok := pub.Verify(sig, transcript2)
+	if !ok {
+		t.Fatalf("Failed to verify")
+	}
+
+	transcript3 := merlin.NewTranscript("hello")
+	ok = pub.Verify(sig, transcript3)
+	if !ok {
+		t.Fatalf("Failed to verify twice")
+	}
+}
+
 func TestSignature_EncodeAndDecode(t *testing.T) {
 	transcript := merlin.NewTranscript("hello")
 	priv, _, err := GenerateKeypair()
