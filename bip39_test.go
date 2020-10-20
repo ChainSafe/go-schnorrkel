@@ -2,7 +2,6 @@ package schnorrkel
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -135,18 +134,7 @@ func TestSubstrateBip39(t *testing.T) {
 			"938ba18c3f521f19bd4a399c8425b02c716844325b1a65106b9d1593fbafe5e0b85448f523f91c48e331995ff24ae406757cff47d11f240847352b348ff436ed",
 		},
 	}
-	for i, tc := range tests {
-		fmt.Println(i)
-
-		// bzSeed, err := hex.DecodeString()
-		// require.Nil(t, err)
-
-		// var expSeed [64]byte
-		// copy(expSeed[:], bzSeed[:64])
-
-		// var expSecret [32]byte
-		// copy(expSecret[:], bzSeed[:32])
-
+	for _, tc := range tests {
 		entropy, err := MnemonicToEntropy(tc.mnemonic)
 		require.Nil(t, err)
 		seed, err := SeedFromMnemonic(tc.mnemonic, "Substrate")
