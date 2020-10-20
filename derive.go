@@ -10,7 +10,7 @@ import (
 const ChainCodeLength = 32
 
 var (
-	ErrDeriveHardKeyType = errors.New("Error deriving hard key type, DerivableKey must be a SecretKey")
+	ErrDeriveHardKeyType = errors.New("Failed to derive hard key type, DerivableKey must be a SecretKey")
 )
 
 // DerivableKey implements DeriveKey
@@ -76,15 +76,12 @@ func (ek *ExtendedKey) DeriveKey(t *merlin.Transcript) (*ExtendedKey, error) {
 // HardDeriveMiniSecretKey implements BIP-32 like "hard" derivation of a mini
 // secret from an extended key's secret key
 func (ek *ExtendedKey) HardDeriveMiniSecretKey(i []byte) (*ExtendedKey, error) {
-
 	sk, err := ek.Secret()
-
 	if err != nil {
 		return nil, err
 	}
 
 	msk, chainCode, err := sk.HardDeriveMiniSecretKey(i, ek.chaincode)
-
 	if err != nil {
 		return nil, err
 	}
@@ -98,11 +95,9 @@ func DeriveKeyHard(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*Exten
 	switch key.(type) {
 	case *SecretKey:
 		msk, resCC, err := key.(*SecretKey).HardDeriveMiniSecretKey(i, cc)
-
 		if err != nil {
 			return nil, err
 		}
-
 		return NewExtendedKey(msk.ExpandEd25519(), resCC), nil
 
 	default:

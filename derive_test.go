@@ -151,7 +151,6 @@ func deriveCommon(t *testing.T, vec commonVectors) {
 	}
 
 	resultPub, err := derived.Public()
-
 	if err != nil {
 		t.Fatal(err)
 	}
