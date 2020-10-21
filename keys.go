@@ -8,6 +8,11 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
+const (
+	// MiniSecretKeyLength is the len in bytes of the MiniSecret Key
+	MiniSecretKeyLength = 32
+)
+
 // MiniSecretKey is a secret scalar
 type MiniSecretKey struct {
 	key [32]byte
