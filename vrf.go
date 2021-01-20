@@ -35,6 +35,21 @@ func (io *VrfInOut) Encode() []byte {
 	return append(inbytes[:], outbytes[:]...)
 }
 
+// MakeBytes returns raw bytes output from the VRF
+// It returns a byte slice of the given size
+// see https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L334
+func (io *VrfInOut) MakeBytes(size int, context []byte) []byte {
+	t := merlin.NewTranscript("VRFResult")
+	t.AppendMessage([]byte(""), context)
+	io.commit(t)
+	return t.ExtractBytes([]byte(""), size)
+}
+
+func (io *VrfInOut) commit(t *merlin.Transcript) {
+	t.AppendMessage([]byte("vrf-in"), io.input.Encode([]byte{}))
+	t.AppendMessage([]byte("vrf-out"), io.output.Encode([]byte{}))
+}
+
 // NewOutput creates a new VRF output from a 64-byte element
 func NewOutput(in [32]byte) *VrfOutput {
 	output := r255.NewElement()
@@ -45,6 +60,7 @@ func NewOutput(in [32]byte) *VrfOutput {
 }
 
 // AttachInput returns a VrfInOut pair from an output
+// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L249
 func (out *VrfOutput) AttachInput(pub *PublicKey, t *merlin.Transcript) *VrfInOut {
 	input := pub.vrfHash(t)
 	return &VrfInOut{
@@ -119,6 +135,8 @@ func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error)
 
 // dleqProve creates a VRF proof for the transcript and input with this secret key.
 // see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L604
+//
+// TODO: update https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L620
 func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
