@@ -10,7 +10,6 @@ import (
 
 func TestInputAndOutput(t *testing.T) {
 	signTranscript := merlin.NewTranscript("vrf-test")
-	inoutTranscript := merlin.NewTranscript("vrf-test")
 	verifyTranscript := merlin.NewTranscript("vrf-test")
 
 	priv, pub, err := GenerateKeypair()
@@ -27,9 +26,8 @@ func TestInputAndOutput(t *testing.T) {
 	outbytes := [32]byte{}
 	copy(outbytes[:], outslice)
 	out := NewOutput(outbytes)
-	inout2 := out.AttachInput(pub, inoutTranscript)
 
-	ok, err := pub.VrfVerify(verifyTranscript, inout2, proof)
+	ok, err := pub.VrfVerify(verifyTranscript, out, proof)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +101,7 @@ func TestVRFSignAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ok, err := pub.VrfVerify(verifyTranscript, inout, proof)
+	ok, err := pub.VrfVerify(verifyTranscript, inout.Output(), proof)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +115,7 @@ func TestVRFSignAndVerify(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ok, err = pub.VrfVerify(verify2Transcript, inout, proof)
+	ok, err = pub.VrfVerify(verify2Transcript, inout.Output(), proof)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,6 +126,8 @@ func TestVRFSignAndVerify(t *testing.T) {
 }
 
 func TestVrfVerify_rust(t *testing.T) {
+	kusama = true
+
 	// test case from https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L922
 	pubbytes := [32]byte{192, 42, 72, 186, 20, 11, 83, 150, 245, 69, 168, 222, 22, 166, 167, 95, 125, 248, 184, 67, 197, 10, 161, 107, 205, 116, 143, 164, 143, 127, 166, 84}
 	pub := NewPublicKey(pubbytes)
@@ -171,7 +171,7 @@ func TestVrfVerify_rust(t *testing.T) {
 		s: s,
 	}
 
-	ok, err := pub.VrfVerify(transcript, inout, proof)
+	ok, err := pub.VrfVerify(transcript, inout.Output(), proof)
 	if err != nil {
 		t.Fatal(err)
 	}
