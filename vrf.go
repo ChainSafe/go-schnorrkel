@@ -21,6 +21,7 @@ type VrfProof struct {
 	s *r255.Scalar
 }
 
+// SetKusama sets the VRF kusama option. Defaults to true.
 func SetKusama(k bool) {
 	kusama = k
 }

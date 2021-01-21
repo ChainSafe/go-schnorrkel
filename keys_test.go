@@ -130,10 +130,3 @@ func TestNewPublicKey(t *testing.T) {
 		t.Fatalf("Fail: got %x expected %x", pub, enc)
 	}
 }
-
-func TestGenerateMiniSecretKey_Public(t *testing.T) {
-	msk, _ := GenerateMiniSecretKey()
-	t.Logf("0x%x\n", msk.Encode())
-	pub := msk.Public()
-	t.Logf("0x%x\n", pub.Encode())
-}
