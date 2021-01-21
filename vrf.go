@@ -5,7 +5,7 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
-var kusama bool
+var kusama bool = true
 
 type VrfInOut struct {
 	input  *r255.Element
