@@ -5,6 +5,8 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
+var kusamaVRF bool = true
+
 type VrfInOut struct {
 	input  *r255.Element
 	output *r255.Element
@@ -17,6 +19,11 @@ type VrfOutput struct {
 type VrfProof struct {
 	c *r255.Scalar
 	s *r255.Scalar
+}
+
+// SetKusama sets the VRF kusama option. Defaults to true.
+func SetKusamaVRF(k bool) {
+	kusamaVRF = k
 }
 
 // Output returns a VrfOutput from a VrfInOut
@@ -35,6 +42,21 @@ func (io *VrfInOut) Encode() []byte {
 	return append(inbytes[:], outbytes[:]...)
 }
 
+// MakeBytes returns raw bytes output from the VRF
+// It returns a byte slice of the given size
+// see https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L334
+func (io *VrfInOut) MakeBytes(size int, context []byte) []byte {
+	t := merlin.NewTranscript("VRFResult")
+	t.AppendMessage([]byte(""), context)
+	io.commit(t)
+	return t.ExtractBytes([]byte(""), size)
+}
+
+func (io *VrfInOut) commit(t *merlin.Transcript) {
+	t.AppendMessage([]byte("vrf-in"), io.input.Encode([]byte{}))
+	t.AppendMessage([]byte("vrf-out"), io.output.Encode([]byte{}))
+}
+
 // NewOutput creates a new VRF output from a 64-byte element
 func NewOutput(in [32]byte) *VrfOutput {
 	output := r255.NewElement()
@@ -45,6 +67,7 @@ func NewOutput(in [32]byte) *VrfOutput {
 }
 
 // AttachInput returns a VrfInOut pair from an output
+// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L249
 func (out *VrfOutput) AttachInput(pub *PublicKey, t *merlin.Transcript) *VrfInOut {
 	input := pub.vrfHash(t)
 	return &VrfInOut{
@@ -109,8 +132,8 @@ func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error)
 		return nil, nil, err
 	}
 
-	t0 := merlin.NewTranscript("VRF")
-	proof, err := sk.dleqProve(t0, p)
+	extra := merlin.NewTranscript("VRF")
+	proof, err := sk.dleqProve(extra, p)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -120,10 +143,21 @@ func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error)
 // dleqProve creates a VRF proof for the transcript and input with this secret key.
 // see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L604
 func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
+	pub, err := sk.Public()
+	if err != nil {
+		return nil, err
+	}
+	pubenc := pub.Encode()
+
 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
+	if !kusamaVRF {
+		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
+	}
 
 	// create random element R = g^r
+	// TODO: update toe use witness scalar
+	// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L620
 	r, err := NewRandomScalar()
 	if err != nil {
 		return nil, err
@@ -136,12 +170,9 @@ func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, er
 	hr := r255.NewElement().ScalarMult(r, p.input).Encode([]byte{})
 	t.AppendMessage([]byte("vrf:h^r"), hr)
 
-	pub, err := sk.Public()
-	if err != nil {
-		return nil, err
+	if kusamaVRF {
+		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
 	}
-	pubenc := pub.Encode()
-	t.AppendMessage([]byte("vrf:pk"), pubenc[:])
 	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
 
 	c := challengeScalar(t, []byte("prove"))
@@ -181,7 +212,8 @@ func (sk *SecretKey) vrfCreateHash(t *merlin.Transcript) (*VrfInOut, error) {
 }
 
 // VrfVerify verifies that the proof and output created are valid given the public key and transcript.
-func (pk *PublicKey) VrfVerify(t *merlin.Transcript, inout *VrfInOut, proof *VrfProof) (bool, error) {
+func (pk *PublicKey) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfProof) (bool, error) {
+	inout := out.AttachInput(pk, t)
 	t0 := merlin.NewTranscript("VRF")
 	return pk.dleqVerify(t0, inout, proof)
 }
@@ -190,6 +222,9 @@ func (pk *PublicKey) VrfVerify(t *merlin.Transcript, inout *VrfInOut, proof *Vrf
 func (pk *PublicKey) dleqVerify(t *merlin.Transcript, p *VrfInOut, proof *VrfProof) (bool, error) {
 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
+	if !kusamaVRF {
+		t.AppendMessage([]byte("vrf:pk"), pk.key.Encode([]byte{}))
+	}
 
 	// R = proof.c*pk + proof.s*g
 	R := r255.NewElement()
@@ -199,7 +234,9 @@ func (pk *PublicKey) dleqVerify(t *merlin.Transcript, p *VrfInOut, proof *VrfPro
 	// hr = proof.c * p.output + proof.s * p.input
 	hr := r255.NewElement().VarTimeMultiScalarMult([]*r255.Scalar{proof.c, proof.s}, []*r255.Element{p.output, p.input})
 	t.AppendMessage([]byte("vrf:h^r"), hr.Encode([]byte{}))
-	t.AppendMessage([]byte("vrf:pk"), pk.key.Encode([]byte{}))
+	if kusamaVRF {
+		t.AppendMessage([]byte("vrf:pk"), pk.key.Encode([]byte{}))
+	}
 	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
 
 	cexpected := challengeScalar(t, []byte("prove"))
