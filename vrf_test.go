@@ -212,9 +212,9 @@ func TestVrfInOut_MakeBytes(t *testing.T) {
 }
 
 func TestVrfVerify_NotKusama(t *testing.T) {
-	kusama = false
+	kusamaVRF = false
 	defer func() {
-		kusama = true
+		kusamaVRF = true
 	}()
 
 	transcript := NewSigningContext([]byte("yo!"), []byte("meow"))

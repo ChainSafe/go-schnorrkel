@@ -5,7 +5,7 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
-var kusama bool = true
+var kusamaVRF bool = true
 
 type VrfInOut struct {
 	input  *r255.Element
@@ -22,8 +22,8 @@ type VrfProof struct {
 }
 
 // SetKusama sets the VRF kusama option. Defaults to true.
-func SetKusama(k bool) {
-	kusama = k
+func SetKusamaVRF(k bool) {
+	kusamaVRF = k
 }
 
 // Output returns a VrfOutput from a VrfInOut
@@ -151,7 +151,7 @@ func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, er
 
 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
-	if !kusama {
+	if !kusamaVRF {
 		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
 	}
 
@@ -170,7 +170,7 @@ func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, er
 	hr := r255.NewElement().ScalarMult(r, p.input).Encode([]byte{})
 	t.AppendMessage([]byte("vrf:h^r"), hr)
 
-	if kusama {
+	if kusamaVRF {
 		t.AppendMessage([]byte("vrf:pk"), pubenc[:])
 	}
 	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
@@ -222,7 +222,7 @@ func (pk *PublicKey) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfP
 func (pk *PublicKey) dleqVerify(t *merlin.Transcript, p *VrfInOut, proof *VrfProof) (bool, error) {
 	t.AppendMessage([]byte("proto-name"), []byte("DLEQProof"))
 	t.AppendMessage([]byte("vrf:h"), p.input.Encode([]byte{}))
-	if !kusama {
+	if !kusamaVRF {
 		t.AppendMessage([]byte("vrf:pk"), pk.key.Encode([]byte{}))
 	}
 
@@ -234,7 +234,7 @@ func (pk *PublicKey) dleqVerify(t *merlin.Transcript, p *VrfInOut, proof *VrfPro
 	// hr = proof.c * p.output + proof.s * p.input
 	hr := r255.NewElement().VarTimeMultiScalarMult([]*r255.Scalar{proof.c, proof.s}, []*r255.Element{p.output, p.input})
 	t.AppendMessage([]byte("vrf:h^r"), hr.Encode([]byte{}))
-	if kusama {
+	if kusamaVRF {
 		t.AppendMessage([]byte("vrf:pk"), pk.key.Encode([]byte{}))
 	}
 	t.AppendMessage([]byte("vrf:h^sk"), p.output.Encode([]byte{}))
