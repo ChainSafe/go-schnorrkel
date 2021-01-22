@@ -142,8 +142,6 @@ func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error)
 
 // dleqProve creates a VRF proof for the transcript and input with this secret key.
 // see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L604
-//
-// TODO: update https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L620
 func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, error) {
 	pub, err := sk.Public()
 	if err != nil {
@@ -158,6 +156,8 @@ func (sk *SecretKey) dleqProve(t *merlin.Transcript, p *VrfInOut) (*VrfProof, er
 	}
 
 	// create random element R = g^r
+	// TODO: update toe use witness scalar
+	// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L620
 	r, err := NewRandomScalar()
 	if err != nil {
 		return nil, err
