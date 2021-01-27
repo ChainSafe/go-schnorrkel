@@ -1,9 +1,14 @@
 package schnorrkel
 
 import (
+	"errors"
+
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
+
+// ErrSignatureNotMarkedSchnorrkel is returned when attempting to decode a signature that is not marked as schnorrkel
+var ErrSignatureNotMarkedSchnorrkel = errors.New("signature is not marked as a schnorrkel signature")
 
 // Signature holds a schnorrkel signature
 type Signature struct {
@@ -95,14 +100,22 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 // Decode sets a Signature from bytes
 // see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L100
 func (s *Signature) Decode(in [64]byte) error {
+	if in[63]&128 == 0 {
+		return ErrSignatureNotMarkedSchnorrkel
+	}
+
+	cp := [64]byte{}
+	copy(cp[:], in[:])
+
 	s.R = r255.NewElement()
-	err := s.R.Decode(in[:32])
+	err := s.R.Decode(cp[:32])
 	if err != nil {
 		return err
 	}
-	in[63] &= 127
+
+	cp[63] &= 127
 	s.S = r255.NewScalar()
-	return s.S.Decode(in[32:])
+	return s.S.Decode(cp[32:])
 }
 
 // Encode turns a signature into a byte array
@@ -115,4 +128,13 @@ func (s *Signature) Encode() [64]byte {
 	copy(out[32:], senc)
 	out[63] |= 128
 	return out
+}
+
+// DecodeNotDistinguishedFromEd25519 sets a signature from bytes, not checking if the signature
+// is explicitly marked as a schnorrkel signature
+func (s *Signature) DecodeNotDistinguishedFromEd25519(in [64]byte) error {
+	cp := [64]byte{}
+	copy(cp[:], in[:])
+	cp[63] |= 128
+	return s.Decode(cp)
 }
