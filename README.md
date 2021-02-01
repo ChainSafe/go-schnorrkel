@@ -1,4 +1,8 @@
 # go-schnorrkel
+  <a href="https://discord.gg/zy8eRF7FG2">
+    <img alt="Discord" src="https://img.shields.io/discord/593655374469660673.svg?style=flat&label=Discord&logo=discord" />
+  </a>
+
 
 Go implementation of the sr25519 signature algorithm (schnorr over ristretto25519). The existing rust implementation is [here.](https://github.com/w3f/schnorrkel)
 
