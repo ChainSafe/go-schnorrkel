@@ -24,7 +24,7 @@ type SecretKey struct {
 	nonce [32]byte
 }
 
-// PublicKey is a member
+// PublicKey is a field element
 type PublicKey struct {
 	key *r255.Element
 }
