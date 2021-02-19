@@ -7,6 +7,7 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
+// VerifyBatch batch verifies the given signatures
 func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubkeys []*PublicKey) (bool, error) {
 	if len(transcripts) != len(signatures) || len(signatures) != len(pubkeys) || len(pubkeys) != len(transcripts) {
 		return false, errors.New("the number of transcripts, signatures, and public keys must be equal")
