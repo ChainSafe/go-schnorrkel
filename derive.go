@@ -92,6 +92,7 @@ func (ek *ExtendedKey) HardDeriveMiniSecretKey(i []byte) (*ExtendedKey, error) {
 // DeriveKeyHard derives a Hard subkey identified by the byte array i and chain
 // code
 func DeriveKeyHard(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+	// nolint:gosimple
 	switch key.(type) {
 	case *SecretKey:
 		msk, resCC, err := key.(*SecretKey).HardDeriveMiniSecretKey(i, cc)

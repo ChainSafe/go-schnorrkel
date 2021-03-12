@@ -1,0 +1,28 @@
+linters:
+  enable:
+    - gofmt
+    - golint
+    - goimports
+    - unparam
+    - unconvert
+    - interfacer
+    - megacheck
+    - staticcheck
+    - unused
+    - gosimple
+    - dupl
+    - goconst
+    - gocyclo
+    - nakedret
+    - scopelint
+    - gocritic
+    - misspell
+    - gosec
+    - dupl
+    - deadcode
+    - errcheck
+    - govet
+    - ineffassign
+    - varcheck
+    - typecheck 
+

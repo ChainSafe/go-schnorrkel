@@ -56,7 +56,7 @@ func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 	b := big.NewInt(0)
 	modulo := big.NewInt(2048)
 	for _, v := range mnemonicSlice {
-		index, _ := bip39.ReverseWordMap[v]
+		index := bip39.ReverseWordMap[v]
 		add := big.NewInt(int64(index))
 		b = b.Mul(b, modulo)
 		b = b.Add(b, add)
