@@ -3,6 +3,7 @@ package schnorrkel
 import (
 	"crypto/rand"
 	"errors"
+
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
