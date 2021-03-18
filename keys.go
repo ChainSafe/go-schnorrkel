@@ -77,12 +77,14 @@ func NewSecretKey(key [32]byte, nonce [32]byte) *SecretKey {
 // NewPublicKey creates a new public key from input bytes
 func NewPublicKey(b [32]byte) *PublicKey {
 	e := r255.NewElement()
+	// nolint:errcheck,gosec
 	e.Decode(b[:])
+
 	return &PublicKey{key: e}
 }
 
-func (s *MiniSecretKey) Decode(in [32]byte) (err error) {
-	s, err = NewMiniSecretKeyFromRaw(in)
+func (s *MiniSecretKey) Decode(in [32]byte) (e error) {
+	_, err := NewMiniSecretKeyFromRaw(in)
 	return err
 }
 

@@ -139,7 +139,7 @@ func TestSubstrateBip39(t *testing.T) {
 		require.Nil(t, err)
 		seed, err := SeedFromMnemonic(tc.mnemonic, "Substrate")
 		require.Nil(t, err)
-		miniSecret, err := MiniSecretFromMnemonic(tc.mnemonic, "Substrate")
+		miniSecret, _ := MiniSecretFromMnemonic(tc.mnemonic, "Substrate")
 		miniSecretBytes := miniSecret.Encode()
 
 		require.Equal(t, tc.hexEntropy, hex.EncodeToString(entropy))
