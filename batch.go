@@ -129,7 +129,7 @@ func (v *BatchVerifier) Verify() bool {
 	// compute ∑ z_i P_i H(R_i || P_i || m_i)
 	phs := r255.NewElement().MultiScalarMult(v.hs, v.pubkeys)
 
-	// ∑ P_i H(R_i || P_i || m_i) + ∑ z_i R_i
+	// ∑ z_i P_i H(R_i || P_i || m_i) + ∑ z_i R_i
 	z := r255.NewElement().Add(phs, v.rs)
 
 	// B ∑ z_i s_i
