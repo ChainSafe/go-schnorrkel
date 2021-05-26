@@ -13,10 +13,14 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 		return false, errors.New("the number of transcripts, signatures, and public keys must be equal")
 	}
 
+	var err error
 	zero := r255.NewElement().Zero()
 	zs := make([]*r255.Scalar, len(transcripts))
 	for i := range zs {
-		zs[i], _ = NewRandomScalar()
+		zs[i], err = NewRandomScalar()
+		if err != nil {
+			return false, err
+		}
 	}
 
 	// compute H(R_i || P_i || m_i)
