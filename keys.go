@@ -83,9 +83,14 @@ func NewPublicKey(b [32]byte) *PublicKey {
 	return &PublicKey{key: e}
 }
 
-func (s *MiniSecretKey) Decode(in [32]byte) (e error) {
-	_, err := NewMiniSecretKeyFromRaw(in)
-	return err
+func (s *MiniSecretKey) Decode(in [32]byte) error {
+	msc, err := NewMiniSecretKeyFromRaw(in)
+	if err != nil {
+		return err
+	}
+
+	s.key = msc.key
+	return nil
 }
 
 func (s *MiniSecretKey) Encode() [32]byte {
