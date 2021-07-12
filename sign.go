@@ -7,6 +7,9 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
+// SignatureSize is the length in bytes of a signature
+const SignatureSize = 64
+
 // ErrSignatureNotMarkedSchnorrkel is returned when attempting to decode a signature that is not marked as schnorrkel
 var ErrSignatureNotMarkedSchnorrkel = errors.New("signature is not marked as a schnorrkel signature")
 
@@ -42,7 +45,7 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	if err != nil {
 		return nil, err
 	}
-	pubc := pub.Compress()
+	pubc := pub.Encode()
 
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 
@@ -81,7 +84,7 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 // 3. return R' == R
 func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
-	pubc := p.Compress()
+	pubc := p.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 	t.AppendMessage([]byte("sign:R"), s.R.Encode([]byte{}))
 
@@ -99,7 +102,7 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 
 // Decode sets a Signature from bytes
 // see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L100
-func (s *Signature) Decode(in [64]byte) error {
+func (s *Signature) Decode(in [SignatureSize]byte) error {
 	if in[63]&128 == 0 {
 		return ErrSignatureNotMarkedSchnorrkel
 	}
@@ -120,7 +123,7 @@ func (s *Signature) Decode(in [64]byte) error {
 
 // Encode turns a signature into a byte array
 // see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L77
-func (s *Signature) Encode() [64]byte {
+func (s *Signature) Encode() [SignatureSize]byte {
 	out := [64]byte{}
 	renc := s.R.Encode([]byte{})
 	copy(out[:32], renc)
@@ -132,7 +135,7 @@ func (s *Signature) Encode() [64]byte {
 
 // DecodeNotDistinguishedFromEd25519 sets a signature from bytes, not checking if the signature
 // is explicitly marked as a schnorrkel signature
-func (s *Signature) DecodeNotDistinguishedFromEd25519(in [64]byte) error {
+func (s *Signature) DecodeNotDistinguishedFromEd25519(in [SignatureSize]byte) error {
 	cp := [64]byte{}
 	copy(cp[:], in[:])
 	cp[63] |= 128
