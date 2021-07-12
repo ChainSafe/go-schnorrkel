@@ -58,13 +58,16 @@ func (io *VrfInOut) commit(t *merlin.Transcript) {
 }
 
 // NewOutput creates a new VRF output from a 64-byte element
-func NewOutput(in [32]byte) *VrfOutput {
+func NewOutput(in [32]byte) (*VrfOutput, error) {
 	output := r255.NewElement()
-	// nolint:errcheck,gosec
-	output.Decode(in[:])
+	err := output.Decode(in[:])
+	if err != nil {
+		return nil, err
+	}
+
 	return &VrfOutput{
 		output: output,
-	}
+	}, nil
 }
 
 // AttachInput returns a VrfInOut pair from an output

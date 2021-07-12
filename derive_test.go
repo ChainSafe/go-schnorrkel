@@ -5,29 +5,24 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/blake2b"
 )
 
 func TestDeriveKey(t *testing.T) {
 	priv, _, err := GenerateKeypair()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	transcript := NewSigningContext([]byte("test"), []byte("noot"))
 	msg := []byte("hello")
 	cc := blake2b.Sum256(msg)
 	_, err = priv.DeriveKey(transcript, cc)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func TestDerivePublicAndPrivateMatch(t *testing.T) {
 	priv, pub, err := GenerateKeypair()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	transcriptPriv := NewSigningContext([]byte("test"), []byte("noot"))
 	transcriptPub := NewSigningContext([]byte("test"), []byte("noot"))
@@ -35,9 +30,7 @@ func TestDerivePublicAndPrivateMatch(t *testing.T) {
 	cc := blake2b.Sum256(msg)
 
 	dpriv, err := priv.DeriveKey(transcriptPriv, cc)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// confirm chain codes are the same for private and public paths
 	dpub, _ := pub.DeriveKey(transcriptPub, cc)
@@ -46,9 +39,7 @@ func TestDerivePublicAndPrivateMatch(t *testing.T) {
 	}
 
 	dpub2, err := dpriv.key.(*SecretKey).Public()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	pubbytes := dpub.key.Encode()
 	pubFromPrivBytes := dpub2.Encode()
@@ -61,9 +52,7 @@ func TestDerivePublicAndPrivateMatch(t *testing.T) {
 	signingTranscript := NewSigningContext([]byte("test"), []byte("signme"))
 	verifyTranscript := NewSigningContext([]byte("test"), []byte("signme"))
 	sig, err := dpriv.key.(*SecretKey).Sign(signingTranscript)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	// confirm that key derived from public path can verify signature derived from private path
 	ok := dpub.key.(*PublicKey).Verify(sig, verifyTranscript)
@@ -113,22 +102,16 @@ type commonVectors struct {
 // deriveCommon provides common functions for testing Soft and Hard key derivation
 func deriveCommon(t *testing.T, vec commonVectors) {
 	kp, err := hex.DecodeString(vec.KeyPair)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	cc, err := hex.DecodeString(vec.ChainCode)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	privBytes := [32]byte{}
 	copy(privBytes[:], kp[:32])
 	priv := new(SecretKey)
 	err = priv.Decode(privBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	ccBytes := [32]byte{}
 	copy(ccBytes[:], cc)
@@ -146,14 +129,10 @@ func deriveCommon(t *testing.T, vec commonVectors) {
 	}
 
 	expectedPub, err := hex.DecodeString(vec.Public)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	resultPub, err := derived.Public()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	resultPubBytes := resultPub.Encode()
 
