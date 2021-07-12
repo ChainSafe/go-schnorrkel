@@ -11,7 +11,7 @@ import (
 const ChainCodeLength = 32
 
 var (
-	ErrDeriveHardKeyType = errors.New("Failed to derive hard key type, DerivableKey must be a SecretKey")
+	ErrDeriveHardKeyType = errors.New("cannot derive hard key type, DerivableKey must be of type SecretKey")
 )
 
 // DerivableKey implements DeriveKey
