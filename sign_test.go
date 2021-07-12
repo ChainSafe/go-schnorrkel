@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"bytes"
 	"encoding/hex"
 	"testing"
 
@@ -59,13 +58,8 @@ func TestSignature_EncodeAndDecode(t *testing.T) {
 	r_exp := sig.R.Encode([]byte{})
 	r_res := res.R.Encode([]byte{})
 
-	if !bytes.Equal(s_exp, s_res) {
-		t.Fatalf("Fail: got %v expected %v", s_res, s_exp)
-	}
-
-	if !bytes.Equal(r_exp, r_res) {
-		t.Fatalf("Fail: got %v expected %v", r_res, r_exp)
-	}
+	require.Equal(t, s_exp, s_res)
+	require.Equal(t, r_exp, r_res)
 }
 
 var SigningContext = []byte("substrate")

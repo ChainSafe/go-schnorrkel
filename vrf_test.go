@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/gtank/merlin"
@@ -44,9 +43,7 @@ func TestOutput_EncodeAndDecode(t *testing.T) {
 	require.NoError(t, err)
 
 	enc2 := out2.Encode()
-	if !bytes.Equal(enc[:], enc2[:]) {
-		t.Fatalf("Fail: got %v expected %v", out.Encode(), out2.Encode())
-	}
+	require.Equal(t, enc[:], enc2[:])
 }
 
 func TestProof_EncodeAndDecode(t *testing.T) {
@@ -67,9 +64,7 @@ func TestProof_EncodeAndDecode(t *testing.T) {
 	require.NoError(t, err)
 
 	enc2 := proof2.Encode()
-	if !bytes.Equal(enc[:], enc2[:]) {
-		t.Fatalf("Fail: got %v expected %v", proof.Encode(), proof2.Encode())
-	}
+	require.Equal(t, enc[:], enc2[:])
 }
 
 func TestVRFSignAndVerify(t *testing.T) {
