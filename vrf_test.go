@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/gtank/merlin"
@@ -14,35 +13,26 @@ func TestInputAndOutput(t *testing.T) {
 	verifyTranscript := merlin.NewTranscript("vrf-test")
 
 	priv, pub, err := GenerateKeypair()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	inout, proof, err := priv.VrfSign(signTranscript)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	outslice := inout.output.Encode([]byte{})
 	outbytes := [32]byte{}
 	copy(outbytes[:], outslice)
-	out := NewOutput(outbytes)
+	out, err := NewOutput(outbytes)
+	require.NoError(t, err)
 
 	ok, err := pub.VrfVerify(verifyTranscript, out, proof)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !ok {
-		t.Fatal("did not verify vrf")
-	}
+	require.NoError(t, err)
+	require.True(t, ok)
 }
 
 func TestOutput_EncodeAndDecode(t *testing.T) {
 	o, err := NewRandomElement()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	out := &VrfOutput{
 		output: o,
 	}
@@ -50,24 +40,18 @@ func TestOutput_EncodeAndDecode(t *testing.T) {
 	enc := out.Encode()
 	out2 := new(VrfOutput)
 	err = out2.Decode(enc)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	enc2 := out2.Encode()
-	if !bytes.Equal(enc[:], enc2[:]) {
-		t.Fatalf("Fail: got %v expected %v", out.Encode(), out2.Encode())
-	}
+	require.Equal(t, enc[:], enc2[:])
 }
 
 func TestProof_EncodeAndDecode(t *testing.T) {
 	c, err := NewRandomScalar()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	s, err := NewRandomScalar()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	proof := &VrfProof{
 		c: c,
@@ -77,14 +61,10 @@ func TestProof_EncodeAndDecode(t *testing.T) {
 	enc := proof.Encode()
 	proof2 := new(VrfProof)
 	err = proof2.Decode(enc)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	enc2 := proof2.Encode()
-	if !bytes.Equal(enc[:], enc2[:]) {
-		t.Fatalf("Fail: got %v expected %v", proof.Encode(), proof2.Encode())
-	}
+	require.Equal(t, enc[:], enc2[:])
 }
 
 func TestVRFSignAndVerify(t *testing.T) {
@@ -93,58 +73,40 @@ func TestVRFSignAndVerify(t *testing.T) {
 	verify2Transcript := merlin.NewTranscript("vrf-test")
 
 	priv, pub, err := GenerateKeypair()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	inout, proof, err := priv.VrfSign(signTranscript)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	ok, err := pub.VrfVerify(verifyTranscript, inout.Output(), proof)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !ok {
-		t.Fatal("did not verify vrf")
-	}
+	require.NoError(t, err)
+	require.True(t, ok)
 
 	proof.c, err = NewRandomScalar()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	ok, err = pub.VrfVerify(verify2Transcript, inout.Output(), proof)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if ok {
-		t.Fatal("verified invalid proof")
-	}
+	require.NoError(t, err)
+	require.False(t, ok)
 }
 
 func TestVrfVerify_rust(t *testing.T) {
 	// test case from https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/vrf.rs#L922
 	pubbytes := [32]byte{192, 42, 72, 186, 20, 11, 83, 150, 245, 69, 168, 222, 22, 166, 167, 95, 125, 248, 184, 67, 197, 10, 161, 107, 205, 116, 143, 164, 143, 127, 166, 84}
-	pub := NewPublicKey(pubbytes)
+	pub, err := NewPublicKey(pubbytes)
+	require.NoError(t, err)
 
 	transcript := NewSigningContext([]byte("yo!"), []byte("meow"))
 
 	inputbytes := []byte{56, 52, 39, 115, 143, 80, 43, 66, 174, 177, 101, 21, 177, 15, 199, 228, 180, 110, 208, 139, 229, 146, 24, 231, 118, 175, 180, 55, 191, 37, 150, 61}
 	outputbytes := []byte{0, 91, 50, 25, 214, 94, 119, 36, 71, 216, 33, 152, 85, 184, 34, 120, 61, 161, 164, 223, 76, 53, 40, 246, 76, 38, 235, 204, 43, 31, 179, 28}
 	input := r255.NewElement()
-	err := input.Decode(inputbytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	err = input.Decode(inputbytes)
+	require.NoError(t, err)
+
 	output := r255.NewElement()
 	err = output.Decode(outputbytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	inout := &VrfInOut{
 		input:  input,
@@ -155,15 +117,11 @@ func TestVrfVerify_rust(t *testing.T) {
 	sbytes := []byte{102, 106, 181, 136, 97, 141, 187, 1, 234, 183, 241, 28, 27, 229, 133, 8, 32, 246, 245, 206, 199, 142, 134, 124, 226, 217, 95, 30, 176, 246, 5, 3}
 	c := r255.NewScalar()
 	err = c.Decode(cbytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	s := r255.NewScalar()
 	err = s.Decode(sbytes)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	proof := &VrfProof{
 		c: c,
@@ -171,13 +129,8 @@ func TestVrfVerify_rust(t *testing.T) {
 	}
 
 	ok, err := pub.VrfVerify(transcript, inout.Output(), proof)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !ok {
-		t.Fatal("did not verify vrf")
-	}
+	require.NoError(t, err)
+	require.True(t, ok)
 }
 
 // input data from https://github.com/noot/schnorrkel/blob/master/src/vrf.rs#L922
@@ -190,9 +143,11 @@ func TestVrfInOut_MakeBytes(t *testing.T) {
 	proof := [64]byte{144, 199, 179, 5, 250, 199, 220, 177, 12, 220, 242, 196, 168, 237, 106, 3, 62, 195, 74, 127, 134, 107, 137, 91, 165, 104, 223, 244, 3, 4, 141, 10, 129, 54, 134, 31, 49, 250, 205, 203, 254, 142, 87, 123, 216, 108, 190, 112, 204, 204, 188, 30, 84, 36, 247, 217, 59, 125, 45, 56, 112, 195, 84, 15}
 	make_bytes_16_expected := []byte{169, 57, 149, 50, 0, 243, 120, 138, 25, 250, 74, 235, 247, 137, 228, 40}
 
-	pubkey := NewPublicKey(pub)
+	pubkey, err := NewPublicKey(pub)
+	require.NoError(t, err)
+
 	out := new(VrfOutput)
-	err := out.Decode(output)
+	err = out.Decode(output)
 	require.NoError(t, err)
 
 	inout := out.AttachInput(pubkey, transcript)
@@ -224,9 +179,11 @@ func TestVrfVerify_NotKusama(t *testing.T) {
 	proof := [64]byte{123, 219, 60, 236, 49, 106, 113, 229, 135, 98, 153, 252, 10, 63, 65, 174, 242, 191, 130, 65, 119, 177, 227, 15, 103, 219, 192, 100, 174, 204, 136, 3, 95, 148, 246, 105, 108, 51, 20, 173, 123, 108, 5, 49, 253, 21, 170, 41, 214, 1, 141, 97, 93, 182, 52, 175, 202, 186, 149, 213, 69, 57, 7, 14}
 	make_bytes_16_expected := []byte{193, 153, 104, 18, 4, 27, 121, 146, 149, 228, 12, 17, 251, 184, 117, 16}
 
-	pubkey := NewPublicKey(pub)
+	pubkey, err := NewPublicKey(pub)
+	require.NoError(t, err)
+
 	out := new(VrfOutput)
-	err := out.Decode(output)
+	err = out.Decode(output)
 	require.NoError(t, err)
 
 	inout := out.AttachInput(pubkey, transcript)
