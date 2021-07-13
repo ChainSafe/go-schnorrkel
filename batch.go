@@ -28,7 +28,7 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 	s := make([]r255.Scalar, len(transcripts))
 	for i, t := range transcripts {
 		t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
-		pubc := pubkeys[i].Compress()
+		pubc := pubkeys[i].Encode()
 		t.AppendMessage([]byte("sign:pk"), pubc[:])
 		t.AppendMessage([]byte("sign:R"), signatures[i].R.Encode([]byte{}))
 
@@ -104,7 +104,7 @@ func (v *BatchVerifier) Add(t *merlin.Transcript, sig *Signature, pubkey *Public
 	}
 
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
-	pubc := pubkey.Compress()
+	pubc := pubkey.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 	t.AppendMessage([]byte("sign:R"), sig.R.Encode([]byte{}))
 

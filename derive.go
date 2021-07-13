@@ -11,7 +11,7 @@ import (
 const ChainCodeLength = 32
 
 var (
-	ErrDeriveHardKeyType = errors.New("Failed to derive hard key type, DerivableKey must be a SecretKey")
+	ErrDeriveHardKeyType = errors.New("cannot derive hard key type, DerivableKey must be of type SecretKey")
 )
 
 // DerivableKey implements DeriveKey
@@ -93,10 +93,9 @@ func (ek *ExtendedKey) HardDeriveMiniSecretKey(i []byte) (*ExtendedKey, error) {
 // DeriveKeyHard derives a Hard subkey identified by the byte array i and chain
 // code
 func DeriveKeyHard(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	// nolint:gosimple
-	switch key.(type) {
+	switch k := key.(type) {
 	case *SecretKey:
-		msk, resCC, err := key.(*SecretKey).HardDeriveMiniSecretKey(i, cc)
+		msk, resCC, err := k.HardDeriveMiniSecretKey(i, cc)
 		if err != nil {
 			return nil, err
 		}
@@ -169,8 +168,8 @@ func (sk *SecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]byte)
 	skenc := sk.Encode()
 	t.AppendMessage([]byte("secret-key"), skenc[:])
 
-	msk := [MiniSecretKeyLength]byte{}
-	mskBytes := t.ExtractBytes([]byte("HDKD-hard"), MiniSecretKeyLength)
+	msk := [MiniSecretKeySize]byte{}
+	mskBytes := t.ExtractBytes([]byte("HDKD-hard"), MiniSecretKeySize)
 	copy(msk[:], mskBytes)
 
 	ccRes := [ChainCodeLength]byte{}
