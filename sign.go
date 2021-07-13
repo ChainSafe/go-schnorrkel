@@ -15,8 +15,27 @@ var ErrSignatureNotMarkedSchnorrkel = errors.New("signature is not marked as a s
 
 // Signature holds a schnorrkel signature
 type Signature struct {
-	R *r255.Element
-	S *r255.Scalar
+	r *r255.Element
+	s *r255.Scalar
+}
+
+// NewSignatureFromHex returns a new Signature from the given hex-encoded string
+func NewSignatureFromHex(s string) (*Signature, error) {
+	sighex, err := HexToBytes(s)
+	if err != nil {
+		return nil, err
+	}
+
+	sigin := [64]byte{}
+	copy(sigin[:], sighex)
+
+	sig := &Signature{}
+	err = sig.Decode(sigin)
+	if err != nil {
+		return nil, err
+	}
+
+	return sig, nil
 }
 
 // NewSigningContext returns a new transcript initialized with the context for the signature
@@ -75,7 +94,10 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	// s = kx + r
 	s := x.Multiply(x, k).Add(x, r)
 
-	return &Signature{R: R, S: s}, nil
+	return &Signature{
+		r: R,
+		s: s,
+	}, nil
 }
 
 // Verify verifies a schnorr signature with format: (R, s) where y is the public key
@@ -86,18 +108,18 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 	pubc := p.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
-	t.AppendMessage([]byte("sign:R"), s.R.Encode([]byte{}))
+	t.AppendMessage([]byte("sign:R"), s.r.Encode([]byte{}))
 
 	kb := t.ExtractBytes([]byte("sign:c"), 64)
 	k := r255.NewScalar()
 	k.FromUniformBytes(kb)
 
 	Rp := r255.NewElement()
-	Rp = Rp.ScalarBaseMult(s.S)
+	Rp = Rp.ScalarBaseMult(s.s)
 	ky := r255.NewElement().ScalarMult(k, p.key)
 	Rp = Rp.Subtract(Rp, ky)
 
-	return Rp.Equal(s.R) == 1
+	return Rp.Equal(s.r) == 1
 }
 
 // Decode sets a Signature from bytes
@@ -110,24 +132,24 @@ func (s *Signature) Decode(in [SignatureSize]byte) error {
 	cp := [64]byte{}
 	copy(cp[:], in[:])
 
-	s.R = r255.NewElement()
-	err := s.R.Decode(cp[:32])
+	s.r = r255.NewElement()
+	err := s.r.Decode(cp[:32])
 	if err != nil {
 		return err
 	}
 
 	cp[63] &= 127
-	s.S = r255.NewScalar()
-	return s.S.Decode(cp[32:])
+	s.s = r255.NewScalar()
+	return s.s.Decode(cp[32:])
 }
 
 // Encode turns a signature into a byte array
 // see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L77
 func (s *Signature) Encode() [SignatureSize]byte {
 	out := [64]byte{}
-	renc := s.R.Encode([]byte{})
+	renc := s.r.Encode([]byte{})
 	copy(out[:32], renc)
-	senc := s.S.Encode([]byte{})
+	senc := s.s.Encode([]byte{})
 	copy(out[32:], senc)
 	out[63] |= 128
 	return out

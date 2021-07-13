@@ -61,6 +61,24 @@ func NewMiniSecretKeyFromRaw(b [MiniSecretKeySize]byte) (*MiniSecretKey, error) 
 	return &MiniSecretKey{key: s}, nil
 }
 
+// NewMiniSecretKeyFromHex returns a new MiniSecretKey from the given hex-encoded string
+func NewMiniSecretKeyFromHex(s string) (*MiniSecretKey, error) {
+	b, err := HexToBytes(s)
+	if err != nil {
+		panic(err)
+	}
+
+	pk := [32]byte{}
+	copy(pk[:], b)
+
+	priv, err := NewMiniSecretKeyFromRaw(pk)
+	if err != nil {
+		panic(err)
+	}
+
+	return priv, nil
+}
+
 // GenerateMiniSecretKey generates a mini secret key from random
 func GenerateMiniSecretKey() (*MiniSecretKey, error) {
 	s := [MiniSecretKeySize]byte{}
@@ -91,6 +109,25 @@ func NewPublicKey(b [PublicKeySize]byte) (*PublicKey, error) {
 	return &PublicKey{
 		key: e,
 	}, nil
+}
+
+// NewPublicKeyFromHex returns a PublicKey from a hex-encoded string
+func NewPublicKeyFromHex(s string) (*PublicKey, error) {
+	pubhex, err := HexToBytes(s)
+	if err != nil {
+		return nil, err
+	}
+
+	in := [32]byte{}
+	copy(in[:], pubhex)
+
+	pub := &PublicKey{}
+	err = pub.Decode(in)
+	if err != nil {
+		return nil, err
+	}
+
+	return pub, nil
 }
 
 // Decode creates a MiniSecretKey from the given input

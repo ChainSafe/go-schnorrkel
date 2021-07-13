@@ -30,7 +30,7 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 		t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 		pubc := pubkeys[i].Encode()
 		t.AppendMessage([]byte("sign:pk"), pubc[:])
-		t.AppendMessage([]byte("sign:R"), signatures[i].R.Encode([]byte{}))
+		t.AppendMessage([]byte("sign:R"), signatures[i].r.Encode([]byte{}))
 
 		h := t.ExtractBytes([]byte("sign:c"), 64)
 		s[i] = *r255.NewScalar()
@@ -50,9 +50,9 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 	ss := r255.NewScalar()
 	rs := r255.NewElement()
 	for i, s := range signatures {
-		zsi := r255.NewScalar().Multiply(s.S, zs[i])
+		zsi := r255.NewScalar().Multiply(s.s, zs[i])
 		ss = r255.NewScalar().Add(ss, zsi)
-		zri := r255.NewElement().ScalarMult(zs[i], s.R)
+		zri := r255.NewElement().ScalarMult(zs[i], s.r)
 		rs = r255.NewElement().Add(rs, zri)
 	}
 
@@ -106,16 +106,16 @@ func (v *BatchVerifier) Add(t *merlin.Transcript, sig *Signature, pubkey *Public
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 	pubc := pubkey.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
-	t.AppendMessage([]byte("sign:R"), sig.R.Encode([]byte{}))
+	t.AppendMessage([]byte("sign:R"), sig.r.Encode([]byte{}))
 
 	h := t.ExtractBytes([]byte("sign:c"), 64)
 	s := r255.NewScalar()
 	s.FromUniformBytes(h)
 	v.hs = append(v.hs, s)
 
-	zs := r255.NewScalar().Multiply(z, sig.S)
+	zs := r255.NewScalar().Multiply(z, sig.s)
 	v.ss.Add(v.ss, zs)
-	zr := r255.NewElement().ScalarMult(z, sig.R)
+	zr := r255.NewElement().ScalarMult(z, sig.r)
 	v.rs.Add(v.rs, zr)
 
 	p := r255.NewElement().ScalarMult(z, pubkey.key)
