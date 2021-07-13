@@ -2,10 +2,22 @@ package schnorrkel
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func ExampleMiniSecretKeyFromMnemonic() {
+	mnemonic := "legal winner thank year wave sausage worth useful legal winner thank yellow"
+	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "Substrate")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("0x%x", msk.Encode())
+	// Output: 0x4313249608fe8ac10fd5886c92c4579007272cb77c21551ee5b8d60b78041685
+}
 
 func TestSubstrateBip39(t *testing.T) {
 	tests := []struct {
@@ -136,10 +148,11 @@ func TestSubstrateBip39(t *testing.T) {
 	}
 	for _, tc := range tests {
 		entropy, err := MnemonicToEntropy(tc.mnemonic)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		seed, err := SeedFromMnemonic(tc.mnemonic, "Substrate")
-		require.Nil(t, err)
-		miniSecret, _ := MiniSecretFromMnemonic(tc.mnemonic, "Substrate")
+		require.NoError(t, err)
+		miniSecret, err := MiniSecretKeyFromMnemonic(tc.mnemonic, "Substrate")
+		require.NoError(t, err)
 		miniSecretBytes := miniSecret.Encode()
 
 		require.Equal(t, tc.hexEntropy, hex.EncodeToString(entropy))

@@ -1,12 +1,41 @@
 package schnorrkel
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 	"github.com/stretchr/testify/require"
 )
+
+func ExampleVrfSign() {
+	priv, pub, err := GenerateKeypair()
+	if err != nil {
+		panic(err)
+	}
+
+	signTranscript := merlin.NewTranscript("vrf-test")
+	verifyTranscript := merlin.NewTranscript("vrf-test")
+
+	inout, proof, err := priv.VrfSign(signTranscript)
+	if err != nil {
+		panic(err)
+	}
+
+	ok, err := pub.VrfVerify(verifyTranscript, inout.Output(), proof)
+	if err != nil {
+		panic(err)
+	}
+
+	if !ok {
+		fmt.Println("failed to verify VRF output and proof")
+		return
+	}
+
+	fmt.Println("verified VRF output and proof")
+	// Output: verified VRF output and proof
+}
 
 func TestInputAndOutput(t *testing.T) {
 	signTranscript := merlin.NewTranscript("vrf-test")

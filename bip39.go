@@ -13,8 +13,8 @@ import (
 // WARNING:  Non-standard BIP39 Implementation
 // Designed for compatibility with the Rust substrate-bip39 library
 
-// MiniSecretFromMnemonic returns a go-schnorrkel MiniSecretKey from a bip39 mnemonic
-func MiniSecretFromMnemonic(mnemonic string, password string) (*MiniSecretKey, error) {
+// MiniSecretKeyFromMnemonic returns a go-schnorrkel MiniSecretKey from a bip39 mnemonic
+func MiniSecretKeyFromMnemonic(mnemonic string, password string) (*MiniSecretKey, error) {
 	seed, err := SeedFromMnemonic(mnemonic, password)
 	if err != nil {
 		return nil, err

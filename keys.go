@@ -65,7 +65,7 @@ func NewMiniSecretKeyFromRaw(b [MiniSecretKeySize]byte) (*MiniSecretKey, error) 
 func NewMiniSecretKeyFromHex(s string) (*MiniSecretKey, error) {
 	b, err := HexToBytes(s)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	pk := [32]byte{}
@@ -73,7 +73,7 @@ func NewMiniSecretKeyFromHex(s string) (*MiniSecretKey, error) {
 
 	priv, err := NewMiniSecretKeyFromRaw(pk)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return priv, nil
