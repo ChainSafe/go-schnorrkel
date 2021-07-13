@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ExampleVrfSign() {
+func ExampleSecretKey_VrfSign() {
 	priv, pub, err := GenerateKeypair()
 	if err != nil {
 		panic(err)

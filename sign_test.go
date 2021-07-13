@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ExampleSign() {
+func ExampleSecretKey_Sign() {
 	msg := []byte("hello")
 	signingCtx := []byte("example")
 
@@ -36,7 +36,7 @@ func ExampleSign() {
 	// Output: verified signature
 }
 
-func ExampleVerify(t *testing.T) {
+func ExamplePublicKey_Verify() {
 	pub, err := NewPublicKeyFromHex("0x46ebddef8cd9bb167dc30878d7113b7e168e6f0646beffd77d69d39bad76b47a")
 	if err != nil {
 		panic(err)
