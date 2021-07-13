@@ -9,9 +9,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run go fmt
-        run: diff -u <(echo -n) <(gofmt -d -s .)
-
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v2
         with:
