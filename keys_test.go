@@ -1,12 +1,57 @@
 package schnorrkel
 
 import (
-	"bytes"
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func ExampleGenerateKeypair() {
+	priv, pub, err := GenerateKeypair()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("0x%x\n", priv.Encode())
+	fmt.Printf("0x%x\n", pub.Encode())
+}
+
+func ExampleMiniSecretKey() {
+	// To create a private-public keypair from a subkey keypair, use `NewMiniSecretKeyFromRaw`
+	// This example uses the substrate built-in key Alice:
+	// $ subkey inspect //Alice
+	priv, err := NewMiniSecretKeyFromHex("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a")
+	if err != nil {
+		panic(err)
+	}
+
+	pub := priv.Public()
+	fmt.Printf("0x%x", pub.Encode())
+	// Output: 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+}
+
+func ExampleMiniSecretKey_ExpandEd25519() {
+	msg := []byte("hello")
+	signingCtx := []byte("example")
+
+	signingTranscript := NewSigningContext(signingCtx, msg)
+
+	msk, err := NewMiniSecretKeyFromHex("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a")
+	if err != nil {
+		panic(err)
+	}
+
+	sk := msk.ExpandEd25519()
+
+	sig, err := sk.Sign(signingTranscript)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("0x%x", sig.Encode())
+}
 
 func TestGenerateKeypair(t *testing.T) {
 	priv, pub, err := GenerateKeypair()
@@ -78,9 +123,7 @@ func TestPublicKey_Decode(t *testing.T) {
 
 	pubcmp := pub.Encode()
 	expcmp := expected.Encode()
-	if !bytes.Equal(pubcmp[:], expcmp[:]) {
-		t.Fatalf("Fail: got %x expected %x", pubcmp, expcmp)
-	}
+	require.Equal(t, expcmp[:], pubcmp[:])
 }
 
 func TestNewPublicKey(t *testing.T) {
