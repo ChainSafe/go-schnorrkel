@@ -5,6 +5,9 @@ import (
 	r255 "github.com/gtank/ristretto255"
 )
 
+// MAX_VRF_BYTES is the maximum bytes that can be extracted from the VRF via MakeBytes
+const MAX_VRF_BYTES = 64
+
 var kusamaVRF bool = true
 
 type VrfInOut struct {
@@ -44,8 +47,12 @@ func (io *VrfInOut) Encode() []byte {
 
 // MakeBytes returns raw bytes output from the VRF
 // It returns a byte slice of the given size
-// see https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L334
-func (io *VrfInOut) MakeBytes(size int, context []byte) []byte {
+// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L343
+func (io *VrfInOut) MakeBytes(size int, context []byte) ([]byte, error) {
+	if size <= 0 || size > MAX_VRF_BYTES {
+		return nil, errors.New("invalid size parameter")
+	}
+
 	t := merlin.NewTranscript("VRFResult")
 	t.AppendMessage([]byte(""), context)
 	io.commit(t)
