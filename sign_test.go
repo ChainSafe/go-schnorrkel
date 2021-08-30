@@ -2,6 +2,7 @@ package schnorrkel
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -172,4 +173,19 @@ func TestVerify_rust(t *testing.T) {
 	ok, err := pub.Verify(sig, transcript)
 	require.NoError(t, err)
 	require.True(t, ok)
+}
+
+func TestVerify_PublicKeyAtInfinity(t *testing.T) {
+	transcript := merlin.NewTranscript("hello")
+	priv := SecretKey{}
+	pub, err := priv.Public()
+	require.NoError(t, err)
+	require.Equal(t, pub.key, publicKeyAtInfinity)
+
+	sig, err := priv.Sign(transcript)
+	require.NoError(t, err)
+
+	transcript2 := merlin.NewTranscript("hello")
+	_, err = pub.Verify(sig, transcript2)
+	require.True(t, errors.Is(err, errPublicKeyAtInfinity))
 }

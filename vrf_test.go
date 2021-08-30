@@ -1,6 +1,7 @@
 package schnorrkel
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -233,4 +234,19 @@ func TestVrfVerify_NotKusama(t *testing.T) {
 	bytes, err := inout.MakeBytes(16, []byte("substrate-babe-vrf"))
 	require.NoError(t, err)
 	require.Equal(t, make_bytes_16_expected, bytes)
+}
+
+func TestVRFVerify_PublicKeyAtInfinity(t *testing.T) {
+	signTranscript := merlin.NewTranscript("vrf-test")
+	verifyTranscript := merlin.NewTranscript("vrf-test")
+
+	priv := SecretKey{}
+	pub, err := priv.Public()
+	require.NoError(t, err)
+	require.Equal(t, pub.key, publicKeyAtInfinity)
+	inout, proof, err := priv.VrfSign(signTranscript)
+	require.NoError(t, err)
+
+	_, err = pub.VrfVerify(verifyTranscript, inout.Output(), proof)
+	require.True(t, errors.Is(err, errPublicKeyAtInfinity))
 }

@@ -250,6 +250,10 @@ func (pk *PublicKey) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfP
 		return false, errors.New("proof provided is nil")
 	}
 
+	if pk.key.Equal(publicKeyAtInfinity) == 1 {
+		return false, errPublicKeyAtInfinity
+	}
+
 	inout, err := out.AttachInput(pk, t)
 	if err != nil {
 		return false, err
