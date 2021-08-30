@@ -52,7 +52,12 @@ func NewRandomScalar() (*r255.Scalar, error) {
 	}
 
 	ss := r255.NewScalar()
-	return ss.FromUniformBytes(s[:]), nil
+	sc := ss.FromUniformBytes(s[:])
+	if sc.Equal(r255.NewScalar()) == 1 {
+		return nil, errors.New("scalar generated was zero")
+	}
+
+	return sc, nil
 }
 
 // ScalarFromBytes returns a ristretto scalar from the input bytes

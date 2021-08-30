@@ -1,6 +1,8 @@
 package schnorrkel
 
 import (
+	"errors"
+
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
@@ -56,7 +58,7 @@ func (io *VrfInOut) MakeBytes(size int, context []byte) ([]byte, error) {
 	t := merlin.NewTranscript("VRFResult")
 	t.AppendMessage([]byte(""), context)
 	io.commit(t)
-	return t.ExtractBytes([]byte(""), size)
+	return t.ExtractBytes([]byte(""), size), nil
 }
 
 func (io *VrfInOut) commit(t *merlin.Transcript) {

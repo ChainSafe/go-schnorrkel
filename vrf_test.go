@@ -191,7 +191,8 @@ func TestVrfInOut_MakeBytes(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 
-	bytes := inout.MakeBytes(16, []byte("substrate-babe-vrf"))
+	bytes, err := inout.MakeBytes(16, []byte("substrate-babe-vrf"))
+	require.NoError(t, err)
 	require.Equal(t, make_bytes_16_expected, bytes)
 }
 
@@ -227,6 +228,7 @@ func TestVrfVerify_NotKusama(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 
-	bytes := inout.MakeBytes(16, []byte("substrate-babe-vrf"))
+	bytes, err := inout.MakeBytes(16, []byte("substrate-babe-vrf"))
+	require.NoError(t, err)
 	require.Equal(t, make_bytes_16_expected, bytes)
 }
