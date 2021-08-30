@@ -104,7 +104,15 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 // 1. k = scalar(transcript.extract_bytes())
 // 2. R' = -ky + gs
 // 3. return R' == R
-func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
+func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
+	if s == nil {
+		return false, errors.New("signature provided is nil")
+	}
+
+	if t == nil {
+		return false, errors.New("transcript provided is nil")
+	}
+
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 	pubc := p.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
@@ -119,7 +127,7 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 	ky := r255.NewElement().ScalarMult(k, p.key)
 	Rp = Rp.Subtract(Rp, ky)
 
-	return Rp.Equal(s.r) == 1
+	return Rp.Equal(s.r) == 1, nil
 }
 
 // Decode sets a Signature from bytes

@@ -179,7 +179,8 @@ func TestVrfInOut_MakeBytes(t *testing.T) {
 	err = out.Decode(output)
 	require.NoError(t, err)
 
-	inout := out.AttachInput(pubkey, transcript)
+	inout, err := out.AttachInput(pubkey, transcript)
+	require.NoError(t, err)
 	require.Equal(t, input, inout.input.Encode([]byte{}))
 
 	p := new(VrfProof)
@@ -216,7 +217,8 @@ func TestVrfVerify_NotKusama(t *testing.T) {
 	err = out.Decode(output)
 	require.NoError(t, err)
 
-	inout := out.AttachInput(pubkey, transcript)
+	inout, err := out.AttachInput(pubkey, transcript)
+	require.NoError(t, err)
 	require.Equal(t, input, inout.input.Encode([]byte{}))
 
 	p := new(VrfProof)

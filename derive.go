@@ -126,7 +126,10 @@ func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 		return nil, err
 	}
 
-	sc, dcc := pub.DeriveScalarAndChaincode(t, cc)
+	sc, dcc, err := pub.DeriveScalarAndChaincode(t, cc)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: need transcript RNG to match rust-schnorrkel
 	// see: https://github.com/w3f/schnorrkel/blob/798ab3e0813aa478b520c5cf6dc6e02fd4e07f0a/src/derive.rs#L186
@@ -191,12 +194,23 @@ func (mk *MiniSecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]b
 
 // DeriveKey derives an Extended Key from the Mini Secret Key
 func (mk *MiniSecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+	if t == nil {
+		return nil, errors.New("transcript provided is nil")
+	}
+
 	sk := mk.ExpandEd25519()
 	return sk.DeriveKey(t, cc)
 }
 
 func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	sc, dcc := pk.DeriveScalarAndChaincode(t, cc)
+	if t == nil {
+		return nil, errors.New("transcript provided is nil")
+	}
+
+	sc, dcc, err := pk.DeriveScalarAndChaincode(t, cc)
+	if err != nil {
+		return nil, err
+	}
 
 	// derivedPk = pk + (sc * g)
 	p1 := r255.NewElement().ScalarBaseMult(sc)
@@ -214,7 +228,11 @@ func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 }
 
 // DeriveScalarAndChaincode derives a new scalar and chain code from an existing public key and chain code
-func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCodeLength]byte) (*r255.Scalar, [ChainCodeLength]byte) {
+func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCodeLength]byte) (*r255.Scalar, [ChainCodeLength]byte, error) {
+	if t == nil {
+		return nil, [32]byte{}, errors.New("transcript provided is nil")
+	}
+
 	t.AppendMessage([]byte("chain-code"), cc[:])
 	pkenc := pk.Encode()
 	t.AppendMessage([]byte("public-key"), pkenc[:])
@@ -226,5 +244,5 @@ func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCod
 	ccBytes := t.ExtractBytes([]byte("HDKD-chaincode"), ChainCodeLength)
 	ccRes := [ChainCodeLength]byte{}
 	copy(ccRes[:], ccBytes)
-	return sc, ccRes
+	return sc, ccRes, nil
 }
