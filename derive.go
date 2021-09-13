@@ -230,7 +230,7 @@ func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 // DeriveScalarAndChaincode derives a new scalar and chain code from an existing public key and chain code
 func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCodeLength]byte) (*r255.Scalar, [ChainCodeLength]byte, error) {
 	if t == nil {
-		return nil, [32]byte{}, errors.New("transcript provided is nil")
+		return nil, [ChainCodeLength]byte{}, errors.New("transcript provided is nil")
 	}
 
 	t.AppendMessage([]byte("chain-code"), cc[:])
