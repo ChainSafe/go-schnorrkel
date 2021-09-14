@@ -1,9 +1,14 @@
 package schnorrkel
 
 import (
+	"errors"
+
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
+
+// MAX_VRF_BYTES is the maximum bytes that can be extracted from the VRF via MakeBytes
+const MAX_VRF_BYTES = 64
 
 var kusamaVRF bool = true
 
@@ -44,12 +49,16 @@ func (io *VrfInOut) Encode() []byte {
 
 // MakeBytes returns raw bytes output from the VRF
 // It returns a byte slice of the given size
-// see https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L334
-func (io *VrfInOut) MakeBytes(size int, context []byte) []byte {
+// https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L343
+func (io *VrfInOut) MakeBytes(size int, context []byte) ([]byte, error) {
+	if size <= 0 || size > MAX_VRF_BYTES {
+		return nil, errors.New("invalid size parameter")
+	}
+
 	t := merlin.NewTranscript("VRFResult")
 	t.AppendMessage([]byte(""), context)
 	io.commit(t)
-	return t.ExtractBytes([]byte(""), size)
+	return t.ExtractBytes([]byte(""), size), nil
 }
 
 func (io *VrfInOut) commit(t *merlin.Transcript) {
@@ -72,12 +81,20 @@ func NewOutput(in [32]byte) (*VrfOutput, error) {
 
 // AttachInput returns a VrfInOut pair from an output
 // https://github.com/w3f/schnorrkel/blob/master/src/vrf.rs#L249
-func (out *VrfOutput) AttachInput(pub *PublicKey, t *merlin.Transcript) *VrfInOut {
+func (out *VrfOutput) AttachInput(pub *PublicKey, t *merlin.Transcript) (*VrfInOut, error) {
+	if pub == nil {
+		return nil, errors.New("public key provided is nil")
+	}
+
+	if t == nil {
+		return nil, errors.New("transcript provided is nil")
+	}
+
 	input := pub.vrfHash(t)
 	return &VrfInOut{
 		input:  input,
 		output: out.output,
-	}
+	}, nil
 }
 
 // Encode returns the 32-byte encoding of the output
@@ -131,6 +148,10 @@ func (p *VrfProof) Decode(in [64]byte) error {
 
 // VrfSign returns a vrf output and proof given a secret key and transcript.
 func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
+	if t == nil {
+		return nil, nil, errors.New("transcript provided is nil")
+	}
+
 	p, err := sk.vrfCreateHash(t)
 	if err != nil {
 		return nil, nil, err
@@ -217,7 +238,27 @@ func (sk *SecretKey) vrfCreateHash(t *merlin.Transcript) (*VrfInOut, error) {
 
 // VrfVerify verifies that the proof and output created are valid given the public key and transcript.
 func (pk *PublicKey) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfProof) (bool, error) {
-	inout := out.AttachInput(pk, t)
+	if t == nil {
+		return false, errors.New("transcript provided is nil")
+	}
+
+	if out == nil {
+		return false, errors.New("output provided is nil")
+	}
+
+	if proof == nil {
+		return false, errors.New("proof provided is nil")
+	}
+
+	if pk.key.Equal(publicKeyAtInfinity) == 1 {
+		return false, errPublicKeyAtInfinity
+	}
+
+	inout, err := out.AttachInput(pk, t)
+	if err != nil {
+		return false, err
+	}
+
 	t0 := merlin.NewTranscript("VRF")
 	return pk.dleqVerify(t0, inout, proof)
 }

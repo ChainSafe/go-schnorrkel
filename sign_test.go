@@ -2,6 +2,7 @@ package schnorrkel
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -26,7 +27,11 @@ func ExampleSecretKey_Sign() {
 		panic(err)
 	}
 
-	ok := pub.Verify(sig, verifyTranscript)
+	ok, err := pub.Verify(sig, verifyTranscript)
+	if err != nil {
+		panic(err)
+	}
+
 	if !ok {
 		fmt.Println("failed to verify signature")
 		return
@@ -49,7 +54,11 @@ func ExamplePublicKey_Verify() {
 
 	msg := []byte("this is a message")
 	transcript := NewSigningContext(SigningContext, msg)
-	ok := pub.Verify(sig, transcript)
+	ok, err := pub.Verify(sig, transcript)
+	if err != nil {
+		panic(err)
+	}
+
 	if !ok {
 		fmt.Println("failed to verify signature")
 		return
@@ -87,7 +96,8 @@ func TestSignAndVerify(t *testing.T) {
 	require.NoError(t, err)
 
 	transcript2 := merlin.NewTranscript("hello")
-	ok := pub.Verify(sig, transcript2)
+	ok, err := pub.Verify(sig, transcript2)
+	require.NoError(t, err)
 	require.True(t, ok)
 }
 
@@ -100,11 +110,13 @@ func TestVerify(t *testing.T) {
 	require.NoError(t, err)
 
 	transcript2 := merlin.NewTranscript("hello")
-	ok := pub.Verify(sig, transcript2)
+	ok, err := pub.Verify(sig, transcript2)
+	require.NoError(t, err)
 	require.True(t, ok)
 
 	transcript3 := merlin.NewTranscript("hello")
-	ok = pub.Verify(sig, transcript3)
+	ok, err = pub.Verify(sig, transcript3)
+	require.NoError(t, err)
 	require.True(t, ok)
 }
 
@@ -158,6 +170,22 @@ func TestVerify_rust(t *testing.T) {
 	require.NoError(t, err)
 
 	transcript := NewSigningContext(SigningContext, msg)
-	ok := pub.Verify(sig, transcript)
+	ok, err := pub.Verify(sig, transcript)
+	require.NoError(t, err)
 	require.True(t, ok)
+}
+
+func TestVerify_PublicKeyAtInfinity(t *testing.T) {
+	transcript := merlin.NewTranscript("hello")
+	priv := SecretKey{}
+	pub, err := priv.Public()
+	require.NoError(t, err)
+	require.Equal(t, pub.key, publicKeyAtInfinity)
+
+	sig, err := priv.Sign(transcript)
+	require.NoError(t, err)
+
+	transcript2 := merlin.NewTranscript("hello")
+	_, err = pub.Verify(sig, transcript2)
+	require.True(t, errors.Is(err, errPublicKeyAtInfinity))
 }

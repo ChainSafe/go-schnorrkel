@@ -50,7 +50,8 @@ func TestDerivePublicAndPrivateMatch(t *testing.T) {
 	require.NoError(t, err)
 
 	// confirm that key derived from public path can verify signature derived from private path
-	ok := dpub.key.(*PublicKey).Verify(sig, verifyTranscript)
+	ok, err := dpub.key.(*PublicKey).Verify(sig, verifyTranscript)
+	require.NoError(t, err)
 	require.True(t, ok)
 }
 

@@ -13,6 +13,10 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 		return false, errors.New("the number of transcripts, signatures, and public keys must be equal")
 	}
 
+	if len(transcripts) == 0 {
+		return true, nil
+	}
+
 	var err error
 	zero := r255.NewElement().Zero()
 	zs := make([]*r255.Scalar, len(transcripts))
@@ -27,6 +31,10 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 	hs := make([]*r255.Scalar, len(transcripts))
 	s := make([]r255.Scalar, len(transcripts))
 	for i, t := range transcripts {
+		if t == nil {
+			return false, errors.New("transcript provided was nil")
+		}
+
 		t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 		pubc := pubkeys[i].Encode()
 		t.AppendMessage([]byte("sign:pk"), pubc[:])
@@ -41,6 +49,10 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 	// compute ∑ z_i P_i H(R_i || P_i || m_i)
 	ps := make([]*r255.Element, len(pubkeys))
 	for i, p := range pubkeys {
+		if p == nil {
+			return false, errors.New("public key provided was nil")
+		}
+
 		ps[i] = r255.NewElement().ScalarMult(zs[i], p.key)
 	}
 
@@ -50,6 +62,10 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 	ss := r255.NewScalar()
 	rs := r255.NewElement()
 	for i, s := range signatures {
+		if s == nil {
+			return false, errors.New("signature provided was nil")
+		}
+
 		zsi := r255.NewScalar().Multiply(s.s, zs[i])
 		ss = r255.NewScalar().Add(ss, zsi)
 		zri := r255.NewElement().ScalarMult(zs[i], s.r)

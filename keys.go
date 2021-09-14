@@ -3,6 +3,7 @@ package schnorrkel
 import (
 	"crypto/rand"
 	"crypto/sha512"
+	"errors"
 
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
@@ -17,6 +18,11 @@ const (
 
 	// PublicKeySize is the length in bytes of a PublicKey
 	PublicKeySize = 32
+)
+
+var (
+	publicKeyAtInfinity    = r255.NewElement().ScalarBaseMult(r255.NewScalar())
+	errPublicKeyAtInfinity = errors.New("public key is the point at infinity")
 )
 
 // MiniSecretKey is a secret scalar
