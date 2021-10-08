@@ -191,7 +191,7 @@ func (s *MiniSecretKey) ExpandEd25519() *SecretKey {
 	return sk
 }
 
-// Public returns the PublicKey corresponding to this MiniSecretKey
+// Public returns the PublicKey expanded from this MiniSecretKey using ExpandEd25519
 func (s *MiniSecretKey) Public() *PublicKey {
 	e := r255.NewElement()
 	sk := s.ExpandEd25519()
