@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"errors"
+	
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
