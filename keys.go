@@ -37,7 +37,7 @@ type SecretKey struct {
 
 // PublicKey is a field element
 type PublicKey struct {
-	key *r255.Element
+	key           *r255.Element
 	compressedKey [PublicKeySize]byte
 }
 
