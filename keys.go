@@ -38,7 +38,8 @@ type SecretKey struct {
 
 // PublicKey is a field element
 type PublicKey struct {
-	key *r255.Element
+	key           *r255.Element
+	compressedKey [PublicKeySize]byte
 }
 
 // GenerateKeypair generates a new schnorrkel secret key and public key
@@ -232,8 +233,12 @@ func (p *PublicKey) Decode(in [PublicKeySize]byte) error {
 
 // Encode returns the encoded point underlying the public key
 func (p *PublicKey) Encode() [PublicKeySize]byte {
+	if p.compressedKey != [PublicKeySize]byte{} {
+		return p.compressedKey
+	}
 	b := p.key.Encode([]byte{})
 	enc := [PublicKeySize]byte{}
 	copy(enc[:], b)
+	p.compressedKey = enc
 	return enc
 }
