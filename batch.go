@@ -56,7 +56,7 @@ func VerifyBatch(transcripts []*merlin.Transcript, signatures []*Signature, pubk
 		ps[i] = r255.NewElement().ScalarMult(zs[i], p.key)
 	}
 
-	phs := r255.NewElement().MultiScalarMult(hs, ps)
+	phs := r255.NewElement().VarTimeMultiScalarMult(hs, ps)
 
 	// compute ∑ z_i s_i and ∑ z_i R_i
 	ss := r255.NewScalar()
@@ -143,7 +143,7 @@ func (v *BatchVerifier) Verify() bool {
 	zero := r255.NewElement().Zero()
 
 	// compute ∑ z_i P_i H(R_i || P_i || m_i)
-	phs := r255.NewElement().MultiScalarMult(v.hs, v.pubkeys)
+	phs := r255.NewElement().VarTimeMultiScalarMult(v.hs, v.pubkeys)
 
 	// ∑ z_i P_i H(R_i || P_i || m_i) + ∑ z_i R_i
 	z := r255.NewElement().Add(phs, v.rs)
