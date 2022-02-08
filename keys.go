@@ -239,6 +239,15 @@ func (s *SecretKey) Public() (*PublicKey, error) {
 	return &PublicKey{key: e.ScalarBaseMult(sc)}, nil
 }
 
+// Keypair Generates the keypair corresponding to this SecretKey
+func (s *SecretKey) Keypair() (*Keypair, error) {
+	pub, err := s.Public()
+	if err != nil {
+		return nil, err
+	}
+	return NewKeypair(pub, s), nil
+}
+
 // Decode creates a PublicKey from the given input
 func (p *PublicKey) Decode(in [PublicKeySize]byte) error {
 	p.key = r255.NewElement()
