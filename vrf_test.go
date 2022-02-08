@@ -38,7 +38,7 @@ func ExampleSecretKey_VrfSign() {
 	// Output: verified VRF output and proof
 }
 
-func ExampleKeyPair_VrfSign() {
+func ExampleKeypair_VrfSign() {
 	priv, pub, err := GenerateKeypair()
 	if err != nil {
 		panic(err)
