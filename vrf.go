@@ -147,6 +147,54 @@ func (p *VrfProof) Decode(in [64]byte) error {
 }
 
 // VrfSign returns a vrf output and proof given a secret key and transcript.
+func (kp *Keypair) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
+	if t == nil {
+		return nil, nil, errors.New("transcript provided is nil")
+	}
+
+	sk := kp.secretKey
+	p, err := sk.vrfCreateHash(t)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	extra := merlin.NewTranscript("VRF")
+	proof, err := sk.dleqProve(extra, p)
+	if err != nil {
+		return nil, nil, err
+	}
+	return p, proof, nil
+}
+
+// VrfVerify verifies that the proof and output created are valid given the public key and transcript.
+func (kp *Keypair) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfProof) (bool, error) {
+	if t == nil {
+		return false, errors.New("transcript provided is nil")
+	}
+
+	if out == nil {
+		return false, errors.New("output provided is nil")
+	}
+
+	if proof == nil {
+		return false, errors.New("proof provided is nil")
+	}
+
+	pk := kp.publicKey
+	if pk.key.Equal(publicKeyAtInfinity) == 1 {
+		return false, errPublicKeyAtInfinity
+	}
+
+	inout, err := out.AttachInput(pk, t)
+	if err != nil {
+		return false, err
+	}
+
+	t0 := merlin.NewTranscript("VRF")
+	return pk.dleqVerify(t0, inout, proof)
+}
+
+// VrfSign returns a vrf output and proof given a secret key and transcript.
 func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
 	if t == nil {
 		return nil, nil, errors.New("transcript provided is nil")
