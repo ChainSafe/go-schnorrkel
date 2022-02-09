@@ -111,6 +111,9 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 // signature: (R, s)
 // public key used for verification: y = g^x
 func (kp *Keypair) Sign(t *merlin.Transcript) (*Signature, error) {
+	if kp.secretKey == nil {
+		return nil, errors.New("secretKey is nil")
+	}
 	return kp.secretKey.Sign(t)
 }
 

@@ -12,6 +12,8 @@ const MAX_VRF_BYTES = 64
 
 var kusamaVRF bool = true
 
+const VRFLabel = "VRF"
+
 type VrfInOut struct {
 	input  *r255.Element
 	output *r255.Element
@@ -152,13 +154,17 @@ func (kp *Keypair) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error) {
 		return nil, nil, errors.New("transcript provided is nil")
 	}
 
+	if kp.secretKey == nil {
+		return nil, nil, errors.New("secretKey is nil")
+	}
+
 	sk := kp.secretKey
 	p, err := sk.vrfCreateHash(t)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	extra := merlin.NewTranscript("VRF")
+	extra := merlin.NewTranscript(VRFLabel)
 	proof, err := sk.dleqProve(extra, p)
 	if err != nil {
 		return nil, nil, err
@@ -180,6 +186,10 @@ func (kp *Keypair) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfPro
 		return false, errors.New("proof provided is nil")
 	}
 
+	if kp.publicKey == nil {
+		return false, errors.New("publicKey is nil")
+	}
+
 	pk := kp.publicKey
 	if pk.key.Equal(publicKeyAtInfinity) == 1 {
 		return false, errPublicKeyAtInfinity
@@ -190,7 +200,7 @@ func (kp *Keypair) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfPro
 		return false, err
 	}
 
-	t0 := merlin.NewTranscript("VRF")
+	t0 := merlin.NewTranscript(VRFLabel)
 	return pk.dleqVerify(t0, inout, proof)
 }
 
@@ -205,7 +215,7 @@ func (sk *SecretKey) VrfSign(t *merlin.Transcript) (*VrfInOut, *VrfProof, error)
 		return nil, nil, err
 	}
 
-	extra := merlin.NewTranscript("VRF")
+	extra := merlin.NewTranscript(VRFLabel)
 	proof, err := sk.dleqProve(extra, p)
 	if err != nil {
 		return nil, nil, err
@@ -307,7 +317,7 @@ func (pk *PublicKey) VrfVerify(t *merlin.Transcript, out *VrfOutput, proof *VrfP
 		return false, err
 	}
 
-	t0 := merlin.NewTranscript("VRF")
+	t0 := merlin.NewTranscript(VRFLabel)
 	return pk.dleqVerify(t0, inout, proof)
 }
 

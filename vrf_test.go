@@ -63,9 +63,6 @@ func ExampleKeypair_VrfSign() {
 		fmt.Println("failed to verify VRF output and proof")
 		return
 	}
-
-	fmt.Println("verified VRF output and proof")
-	// Output: verified VRF output and proof
 }
 
 func TestKeypairInputAndOutput(t *testing.T) {
