@@ -13,6 +13,21 @@ import (
 // WARNING:  Non-standard BIP39 Implementation
 // Designed for compatibility with the Rust substrate-bip39 library
 
+// GenerateMiniSecretKeyMnemonic returns mnemonic for func MiniSecretKeyFromMnemonic
+func GenerateMiniSecretKeyMnemonic() (string, error) {
+	entropy, err := bip39.NewEntropy(256)
+	if err != nil {
+		return "", err
+	}
+
+	mnemonic, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		return "", err
+	}
+
+	return mnemonic, nil
+}
+
 // MiniSecretKeyFromMnemonic returns a go-schnorrkel MiniSecretKey from a bip39 mnemonic
 func MiniSecretKeyFromMnemonic(mnemonic string, password string) (*MiniSecretKey, error) {
 	seed, err := SeedFromMnemonic(mnemonic, password)
