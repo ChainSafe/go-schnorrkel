@@ -8,6 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func ExampleGenerateMiniSecretKeyMnemonic() {
+	mnemonic, err := GenerateMiniSecretKeyMnemonic()
+	if err != nil {
+		panic(err)
+	}
+
+	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("mnemonic: %s, privateKey: 0x%x", mnemonic, msk.Encode())
+}
+
 func ExampleMiniSecretKeyFromMnemonic() {
 	mnemonic := "legal winner thank year wave sausage worth useful legal winner thank yellow"
 	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "Substrate")
