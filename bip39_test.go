@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ExampleGenerateMiniSecretKeyMnemonic() {
-	mnemonic, err := GenerateMiniSecretKeyMnemonic()
+func ExampleGenerateMnemonic() {
+	mnemonic, err := GenerateMnemonic()
 	if err != nil {
 		panic(err)
 	}

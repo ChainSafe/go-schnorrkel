@@ -10,12 +10,15 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+// entropy mnemonic bit size
+const entropySize = 256
+
 // WARNING:  Non-standard BIP39 Implementation
 // Designed for compatibility with the Rust substrate-bip39 library
 
-// GenerateMiniSecretKeyMnemonic returns mnemonic for func MiniSecretKeyFromMnemonic
-func GenerateMiniSecretKeyMnemonic() (string, error) {
-	entropy, err := bip39.NewEntropy(256)
+// GenerateMnemonic returns mnemonic for func MiniSecretKeyFromMnemonic
+func GenerateMnemonic() (string, error) {
+	entropy, err := bip39.NewEntropy(entropySize)
 	if err != nil {
 		return "", err
 	}
