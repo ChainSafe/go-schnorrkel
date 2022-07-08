@@ -239,7 +239,7 @@ func (s *SecretKey) Public() (*PublicKey, error) {
 	return &PublicKey{key: e.ScalarBaseMult(sc)}, nil
 }
 
-// Keypair Generates the keypair corresponding to this SecretKey
+// Keypair returns the keypair corresponding to this SecretKey
 func (s *SecretKey) Keypair() (*Keypair, error) {
 	pub, err := s.Public()
 	if err != nil {

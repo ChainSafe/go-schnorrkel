@@ -151,6 +151,17 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 	return Rp.Equal(s.r) == 1, nil
 }
 
+// Verify verifies a schnorr signature with format: (R, s) where y is the public key
+// 1. k = scalar(transcript.extract_bytes())
+// 2. R' = -ky + gs
+// 3. return R' == R
+func (kp *Keypair) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
+	if kp.publicKey == nil {
+		return false, errors.New("publicKey is nil")
+	}
+	return kp.publicKey.Verify(s, t)
+}
+
 // Decode sets a Signature from bytes
 // see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L100
 func (s *Signature) Decode(in [SignatureSize]byte) error {
