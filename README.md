@@ -10,7 +10,7 @@ This library is currently able to create sr25519 keys, import sr25519 keys, and 
 
 The BIP39 implementation in this library is compatible with the rust [substrate-bip39](https://github.com/paritytech/substrate-bip39) implementation.  Note that this is not a standard bip39 implementation.
 
-This library has been audited as of August 2021 and is production-ready.
+This library has been audited as of August 2021 and is production-ready. Please see the [audit report](audit_report.pdf) for the results of the audit.
 
 ### dependencies
 

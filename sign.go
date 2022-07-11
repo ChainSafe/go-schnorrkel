@@ -143,10 +143,7 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 	k := r255.NewScalar()
 	k.FromUniformBytes(kb)
 
-	Rp := r255.NewElement()
-	Rp = Rp.ScalarBaseMult(s.s)
-	ky := r255.NewElement().ScalarMult(k, p.key)
-	Rp = Rp.Subtract(Rp, ky)
+	Rp := r255.NewElement().VarTimeDoubleScalarBaseMult(k, r255.NewElement().Negate(p.key), s.s)
 
 	return Rp.Equal(s.r) == 1, nil
 }
