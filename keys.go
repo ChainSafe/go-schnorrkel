@@ -42,6 +42,12 @@ type PublicKey struct {
 	compressedKey [PublicKeySize]byte
 }
 
+// Keypair consists of a PublicKey and a SecretKey
+type Keypair struct {
+	publicKey *PublicKey
+	secretKey *SecretKey
+}
+
 // GenerateKeypair generates a new schnorrkel secret key and public key
 func GenerateKeypair() (*SecretKey, *PublicKey, error) {
 	// decodes priv bytes as little-endian
@@ -116,6 +122,14 @@ func NewPublicKey(b [PublicKeySize]byte) (*PublicKey, error) {
 	return &PublicKey{
 		key: e,
 	}, nil
+}
+
+// NewKeypair creates a new keypair from a public key and secret key
+func NewKeypair(pk *PublicKey, sk *SecretKey) *Keypair {
+	return &Keypair{
+		publicKey: pk,
+		secretKey: sk,
+	}
 }
 
 // NewPublicKeyFromHex returns a PublicKey from a hex-encoded string
@@ -223,6 +237,15 @@ func (s *SecretKey) Public() (*PublicKey, error) {
 		return nil, err
 	}
 	return &PublicKey{key: e.ScalarBaseMult(sc)}, nil
+}
+
+// Keypair returns the keypair corresponding to this SecretKey
+func (s *SecretKey) Keypair() (*Keypair, error) {
+	pub, err := s.Public()
+	if err != nil {
+		return nil, err
+	}
+	return NewKeypair(pub, s), nil
 }
 
 // Decode creates a PublicKey from the given input

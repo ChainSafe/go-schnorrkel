@@ -101,6 +101,22 @@ func TestSignAndVerify(t *testing.T) {
 	require.True(t, ok)
 }
 
+func TestSignAndVerifyKeypair(t *testing.T) {
+	transcript := merlin.NewTranscript("hello")
+	priv, pub, err := GenerateKeypair()
+	require.NoError(t, err)
+
+	kp := NewKeypair(pub, priv)
+
+	sig, err := kp.Sign(transcript)
+	require.NoError(t, err)
+
+	transcript2 := merlin.NewTranscript("hello")
+	ok, err := pub.Verify(sig, transcript2)
+	require.NoError(t, err)
+	require.True(t, ok)
+}
+
 func TestVerify(t *testing.T) {
 	transcript := merlin.NewTranscript("hello")
 	priv, pub, err := GenerateKeypair()
@@ -116,6 +132,26 @@ func TestVerify(t *testing.T) {
 
 	transcript3 := merlin.NewTranscript("hello")
 	ok, err = pub.Verify(sig, transcript3)
+	require.NoError(t, err)
+	require.True(t, ok)
+}
+
+func TestVerifyKeypair(t *testing.T) {
+	transcript := merlin.NewTranscript("hello")
+	priv, pub, err := GenerateKeypair()
+	require.NoError(t, err)
+
+	kp := NewKeypair(pub, priv)
+	sig, err := kp.Sign(transcript)
+	require.NoError(t, err)
+
+	transcript2 := merlin.NewTranscript("hello")
+	ok, err := kp.Verify(sig, transcript2)
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	transcript3 := merlin.NewTranscript("hello")
+	ok, err = kp.Verify(sig, transcript3)
 	require.NoError(t, err)
 	require.True(t, ok)
 }

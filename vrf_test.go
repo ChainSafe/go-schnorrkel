@@ -38,6 +38,55 @@ func ExampleSecretKey_VrfSign() {
 	// Output: verified VRF output and proof
 }
 
+func ExampleKeypair_VrfSign() {
+	priv, pub, err := GenerateKeypair()
+	if err != nil {
+		panic(err)
+	}
+
+	kp := NewKeypair(pub, priv)
+
+	signTranscript := merlin.NewTranscript("vrf-test")
+	verifyTranscript := merlin.NewTranscript("vrf-test")
+
+	inout, proof, err := kp.VrfSign(signTranscript)
+	if err != nil {
+		panic(err)
+	}
+
+	ok, err := kp.VrfVerify(verifyTranscript, inout.Output(), proof)
+	if err != nil {
+		panic(err)
+	}
+
+	if !ok {
+		fmt.Println("failed to verify VRF output and proof")
+		return
+	}
+}
+
+func TestKeypairInputAndOutput(t *testing.T) {
+	signTranscript := merlin.NewTranscript("vrf-test")
+	verifyTranscript := merlin.NewTranscript("vrf-test")
+
+	priv, pub, err := GenerateKeypair()
+	require.NoError(t, err)
+	kp := NewKeypair(pub, priv)
+
+	inout, proof, err := kp.VrfSign(signTranscript)
+	require.NoError(t, err)
+
+	outslice := inout.output.Encode([]byte{})
+	outbytes := [32]byte{}
+	copy(outbytes[:], outslice)
+	out, err := NewOutput(outbytes)
+	require.NoError(t, err)
+
+	ok, err := kp.VrfVerify(verifyTranscript, out, proof)
+	require.NoError(t, err)
+	require.True(t, ok)
+}
+
 func TestInputAndOutput(t *testing.T) {
 	signTranscript := merlin.NewTranscript("vrf-test")
 	verifyTranscript := merlin.NewTranscript("vrf-test")

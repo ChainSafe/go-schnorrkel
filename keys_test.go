@@ -64,6 +64,17 @@ func TestGenerateKeypair(t *testing.T) {
 	require.Equal(t, pub.key.Encode([]byte{}), pub2.key.Encode([]byte{}))
 }
 
+func TestGenerateKeypairFromSecretKey(t *testing.T) {
+	priv, pub, err := GenerateKeypair()
+	require.NoError(t, err)
+	require.NotNil(t, priv)
+	require.NotNil(t, pub)
+
+	kp, err := priv.Keypair()
+	require.NoError(t, err)
+	require.Equal(t, pub.key.Encode([]byte{}), kp.publicKey.key.Encode([]byte{}))
+}
+
 // test cases from: https://github.com/Warchant/sr25519-crust/blob/master/test/keypair_from_seed.cpp
 func TestMiniSecretKey_ExpandEd25519(t *testing.T) {
 	msc, err := NewMiniSecretKeyFromRaw([32]byte{})

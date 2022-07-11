@@ -100,6 +100,23 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	}, nil
 }
 
+// Sign uses the schnorr signature algorithm to sign a message
+// See the following for the transcript message
+// https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/sign.rs#L158
+// Schnorr w/ transcript, secret key x:
+// 1. choose random r from group
+// 2. R = gr
+// 3. k = scalar(transcript.extract_bytes())
+// 4. s = kx + r
+// signature: (R, s)
+// public key used for verification: y = g^x
+func (kp *Keypair) Sign(t *merlin.Transcript) (*Signature, error) {
+	if kp.secretKey == nil {
+		return nil, errors.New("secretKey is nil")
+	}
+	return kp.secretKey.Sign(t)
+}
+
 // Verify verifies a schnorr signature with format: (R, s) where y is the public key
 // 1. k = scalar(transcript.extract_bytes())
 // 2. R' = -ky + gs
@@ -129,6 +146,17 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 	Rp := r255.NewElement().VarTimeDoubleScalarBaseMult(k, r255.NewElement().Negate(p.key), s.s)
 
 	return Rp.Equal(s.r) == 1, nil
+}
+
+// Verify verifies a schnorr signature with format: (R, s) where y is the public key
+// 1. k = scalar(transcript.extract_bytes())
+// 2. R' = -ky + gs
+// 3. return R' == R
+func (kp *Keypair) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
+	if kp.publicKey == nil {
+		return false, errors.New("publicKey is nil")
+	}
+	return kp.publicKey.Verify(s, t)
 }
 
 // Decode sets a Signature from bytes
