@@ -1,6 +1,6 @@
 module github.com/ChainSafe/go-schnorrkel
 
-go 1.13
+go 1.16
 
 require (
 	github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d

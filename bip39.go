@@ -10,11 +10,29 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+// entropy mnemonic bit size
+const entropySize = 256
+
 // WARNING:  Non-standard BIP39 Implementation
 // Designed for compatibility with the Rust substrate-bip39 library
 
-// MiniSecretFromMnemonic returns a go-schnorrkel MiniSecretKey from a bip39 mnemonic
-func MiniSecretFromMnemonic(mnemonic string, password string) (*MiniSecretKey, error) {
+// GenerateMnemonic returns mnemonic for func MiniSecretKeyFromMnemonic
+func GenerateMnemonic() (string, error) {
+	entropy, err := bip39.NewEntropy(entropySize)
+	if err != nil {
+		return "", err
+	}
+
+	mnemonic, err := bip39.NewMnemonic(entropy)
+	if err != nil {
+		return "", err
+	}
+
+	return mnemonic, nil
+}
+
+// MiniSecretKeyFromMnemonic returns a go-schnorrkel MiniSecretKey from a bip39 mnemonic
+func MiniSecretKeyFromMnemonic(mnemonic string, password string) (*MiniSecretKey, error) {
 	seed, err := SeedFromMnemonic(mnemonic, password)
 	if err != nil {
 		return nil, err
@@ -56,7 +74,7 @@ func MnemonicToEntropy(mnemonic string) ([]byte, error) {
 	b := big.NewInt(0)
 	modulo := big.NewInt(2048)
 	for _, v := range mnemonicSlice {
-		index, _ := bip39.ReverseWordMap[v]
+		index := bip39.ReverseWordMap[v]
 		add := big.NewInt(int64(index))
 		b = b.Mul(b, modulo)
 		b = b.Add(b, add)

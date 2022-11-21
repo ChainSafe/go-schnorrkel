@@ -2,6 +2,9 @@ package schnorrkel
 
 import (
 	"crypto/rand"
+	"encoding/hex"
+	"errors"
+	"strings"
 
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
@@ -19,7 +22,7 @@ func divideScalarByCofactor(s []byte) []byte {
 	l := len(s) - 1
 	low := byte(0)
 	for i := range s {
-		r := s[l-i] & 0b00000111 // remainder
+		r := s[l-i] & 0x07 // remainder
 		s[l-i] >>= 3
 		s[l-i] += low
 		low = r << 5
@@ -49,7 +52,12 @@ func NewRandomScalar() (*r255.Scalar, error) {
 	}
 
 	ss := r255.NewScalar()
-	return ss.FromUniformBytes(s[:]), nil
+	sc := ss.FromUniformBytes(s[:])
+	if sc.Equal(r255.NewScalar()) == 1 {
+		return nil, errors.New("scalar generated was zero")
+	}
+
+	return sc, nil
 }
 
 // ScalarFromBytes returns a ristretto scalar from the input bytes
@@ -62,4 +70,23 @@ func ScalarFromBytes(b [32]byte) (*r255.Scalar, error) {
 	}
 
 	return s, nil
+}
+
+// HexToBytes turns a 0x prefixed hex string into a byte slice
+func HexToBytes(in string) ([]byte, error) {
+	if len(in) < 2 {
+		return nil, errors.New("invalid string")
+	}
+
+	if strings.Compare(in[:2], "0x") != 0 {
+		return nil, errors.New("could not byteify non 0x prefixed string")
+	}
+
+	if len(in)%2 != 0 {
+		return nil, errors.New("cannot decode a odd length string")
+	}
+
+	in = in[2:]
+	out, err := hex.DecodeString(in)
+	return out, err
 }

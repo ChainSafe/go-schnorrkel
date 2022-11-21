@@ -3,14 +3,31 @@ package schnorrkel
 import (
 	"crypto/rand"
 	"crypto/sha512"
+	"errors"
 
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 )
 
+const (
+	// MiniSecretKeySize is the length in bytes of a MiniSecretKey
+	MiniSecretKeySize = 32
+
+	// SecretKeySize is the length in bytes of a SecretKey
+	SecretKeySize = 32
+
+	// PublicKeySize is the length in bytes of a PublicKey
+	PublicKeySize = 32
+)
+
+var (
+	publicKeyAtInfinity    = r255.NewElement().ScalarBaseMult(r255.NewScalar())
+	errPublicKeyAtInfinity = errors.New("public key is the point at infinity")
+)
+
 // MiniSecretKey is a secret scalar
 type MiniSecretKey struct {
-	key [32]byte
+	key [MiniSecretKeySize]byte
 }
 
 // SecretKey consists of a secret scalar and a signing nonce
@@ -19,9 +36,16 @@ type SecretKey struct {
 	nonce [32]byte
 }
 
-// PublicKey is a member
+// PublicKey is a field element
 type PublicKey struct {
-	key *r255.Element
+	key           *r255.Element
+	compressedKey [PublicKeySize]byte
+}
+
+// Keypair consists of a PublicKey and a SecretKey
+type Keypair struct {
+	publicKey *PublicKey
+	secretKey *SecretKey
 }
 
 // GenerateKeypair generates a new schnorrkel secret key and public key
@@ -34,25 +58,43 @@ func GenerateKeypair() (*SecretKey, *PublicKey, error) {
 	return msc.ExpandEd25519(), msc.Public(), nil
 }
 
-// NewMiniSecretKey derives a mini secret key from a byte array
+// NewMiniSecretKey derives a mini secret key from a seed
 func NewMiniSecretKey(b [64]byte) *MiniSecretKey {
 	s := r255.NewScalar()
 	s.FromUniformBytes(b[:])
 	enc := s.Encode([]byte{})
-	sk := [32]byte{}
+	sk := [MiniSecretKeySize]byte{}
 	copy(sk[:], enc)
 	return &MiniSecretKey{key: sk}
 }
 
 // NewMiniSecretKeyFromRaw derives a mini secret key from little-endian encoded raw bytes.
-func NewMiniSecretKeyFromRaw(b [32]byte) (*MiniSecretKey, error) {
+func NewMiniSecretKeyFromRaw(b [MiniSecretKeySize]byte) (*MiniSecretKey, error) {
 	s := b
 	return &MiniSecretKey{key: s}, nil
 }
 
+// NewMiniSecretKeyFromHex returns a new MiniSecretKey from the given hex-encoded string
+func NewMiniSecretKeyFromHex(s string) (*MiniSecretKey, error) {
+	b, err := HexToBytes(s)
+	if err != nil {
+		return nil, err
+	}
+
+	pk := [32]byte{}
+	copy(pk[:], b)
+
+	priv, err := NewMiniSecretKeyFromRaw(pk)
+	if err != nil {
+		return nil, err
+	}
+
+	return priv, nil
+}
+
 // GenerateMiniSecretKey generates a mini secret key from random
 func GenerateMiniSecretKey() (*MiniSecretKey, error) {
-	s := [32]byte{}
+	s := [MiniSecretKeySize]byte{}
 	_, err := rand.Read(s[:])
 	if err != nil {
 		return nil, err
@@ -62,7 +104,7 @@ func GenerateMiniSecretKey() (*MiniSecretKey, error) {
 }
 
 // NewSecretKey creates a new secret key from input bytes
-func NewSecretKey(key [32]byte, nonce [32]byte) *SecretKey {
+func NewSecretKey(key [SecretKeySize]byte, nonce [32]byte) *SecretKey {
 	return &SecretKey{
 		key:   key,
 		nonce: nonce,
@@ -70,22 +112,62 @@ func NewSecretKey(key [32]byte, nonce [32]byte) *SecretKey {
 }
 
 // NewPublicKey creates a new public key from input bytes
-func NewPublicKey(b [32]byte) *PublicKey {
+func NewPublicKey(b [PublicKeySize]byte) (*PublicKey, error) {
 	e := r255.NewElement()
-	e.Decode(b[:])
-	return &PublicKey{key: e}
+	err := e.Decode(b[:])
+	if err != nil {
+		return nil, err
+	}
+
+	return &PublicKey{
+		key: e,
+	}, nil
 }
 
-func (s *MiniSecretKey) Decode(in [32]byte) (err error) {
-	s, err = NewMiniSecretKeyFromRaw(in)
-	return err
+// NewKeypair creates a new keypair from a public key and secret key
+func NewKeypair(pk *PublicKey, sk *SecretKey) *Keypair {
+	return &Keypair{
+		publicKey: pk,
+		secretKey: sk,
+	}
 }
 
-func (s *MiniSecretKey) Encode() [32]byte {
+// NewPublicKeyFromHex returns a PublicKey from a hex-encoded string
+func NewPublicKeyFromHex(s string) (*PublicKey, error) {
+	pubhex, err := HexToBytes(s)
+	if err != nil {
+		return nil, err
+	}
+
+	in := [32]byte{}
+	copy(in[:], pubhex)
+
+	pub := &PublicKey{}
+	err = pub.Decode(in)
+	if err != nil {
+		return nil, err
+	}
+
+	return pub, nil
+}
+
+// Decode creates a MiniSecretKey from the given input
+func (s *MiniSecretKey) Decode(in [MiniSecretKeySize]byte) error {
+	msc, err := NewMiniSecretKeyFromRaw(in)
+	if err != nil {
+		return err
+	}
+
+	s.key = msc.key
+	return nil
+}
+
+// Encode returns the MiniSecretKey's underlying bytes
+func (s *MiniSecretKey) Encode() [MiniSecretKeySize]byte {
 	return s.key
 }
 
-// ExpandUniform
+// ExpandUniform expands a MiniSecretKey into a SecretKey
 func (s *MiniSecretKey) ExpandUniform() *SecretKey {
 	t := merlin.NewTranscript("ExpandSecretKeys")
 	t.AppendMessage([]byte("mini"), s.key[:])
@@ -103,25 +185,28 @@ func (s *MiniSecretKey) ExpandUniform() *SecretKey {
 	}
 }
 
-// ExpandEd25519 expands a mini secret key into a secret key
+// ExpandEd25519 expands a MiniSecretKey into a SecretKey using ed25519-style bit clamping
 // https://github.com/w3f/schnorrkel/blob/43f7fc00724edd1ef53d5ae13d82d240ed6202d5/src/keys.rs#L196
 func (s *MiniSecretKey) ExpandEd25519() *SecretKey {
 	h := sha512.Sum512(s.key[:])
-	sk := &SecretKey{key: [32]byte{}, nonce: [32]byte{}}
+	sk := &SecretKey{
+		key:   [SecretKeySize]byte{},
+		nonce: [32]byte{},
+	}
 
 	copy(sk.key[:], h[:32])
+
 	sk.key[0] &= 248
 	sk.key[31] &= 63
 	sk.key[31] |= 64
 	t := divideScalarByCofactor(sk.key[:])
+
 	copy(sk.key[:], t)
-
 	copy(sk.nonce[:], h[32:])
-
 	return sk
 }
 
-// Public gets the public key corresponding to this mini secret key
+// Public returns the PublicKey expanded from this MiniSecretKey using ExpandEd25519
 func (s *MiniSecretKey) Public() *PublicKey {
 	e := r255.NewElement()
 	sk := s.ExpandEd25519()
@@ -129,21 +214,22 @@ func (s *MiniSecretKey) Public() *PublicKey {
 	if err != nil {
 		return nil
 	}
+
 	return &PublicKey{key: e.ScalarBaseMult(skey)}
 }
 
-// Decode forms the secret key from the input bytes
-func (s *SecretKey) Decode(in [32]byte) error {
+// Decode creates a SecretKey from the given input
+func (s *SecretKey) Decode(in [SecretKeySize]byte) error {
 	s.key = in
 	return nil
 }
 
-// Encode returns the secret key as bytes
-func (s *SecretKey) Encode() [32]byte {
+// Encode returns the SecretKey's underlying bytes
+func (s *SecretKey) Encode() [SecretKeySize]byte {
 	return s.key
 }
 
-// Public gets the public key corresponding to this secret key
+// Public gets the public key corresponding to this SecretKey
 func (s *SecretKey) Public() (*PublicKey, error) {
 	e := r255.NewElement()
 	sc, err := ScalarFromBytes(s.key)
@@ -153,20 +239,29 @@ func (s *SecretKey) Public() (*PublicKey, error) {
 	return &PublicKey{key: e.ScalarBaseMult(sc)}, nil
 }
 
-func (p *PublicKey) Decode(in [32]byte) error {
+// Keypair returns the keypair corresponding to this SecretKey
+func (s *SecretKey) Keypair() (*Keypair, error) {
+	pub, err := s.Public()
+	if err != nil {
+		return nil, err
+	}
+	return NewKeypair(pub, s), nil
+}
+
+// Decode creates a PublicKey from the given input
+func (p *PublicKey) Decode(in [PublicKeySize]byte) error {
 	p.key = r255.NewElement()
 	return p.key.Decode(in[:])
 }
 
-// Compress returns the encoding of the point underlying the public key
-func (p *PublicKey) Compress() [32]byte {
+// Encode returns the encoded point underlying the public key
+func (p *PublicKey) Encode() [PublicKeySize]byte {
+	if p.compressedKey != [PublicKeySize]byte{} {
+		return p.compressedKey
+	}
 	b := p.key.Encode([]byte{})
-	enc := [32]byte{}
+	enc := [PublicKeySize]byte{}
 	copy(enc[:], b)
+	p.compressedKey = enc
 	return enc
-}
-
-// Encode is a wrapper around compress
-func (p *PublicKey) Encode() [32]byte {
-	return p.Compress()
 }

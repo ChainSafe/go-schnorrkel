@@ -8,6 +8,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func ExampleGenerateMnemonic() {
+	mnemonic, err := GenerateMnemonic()
+	if err != nil {
+		panic(err)
+	}
+
+	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("mnemonic: %s, privateKey: 0x%x", mnemonic, msk.Encode())
+}
+
+func ExampleMiniSecretKeyFromMnemonic() {
+	mnemonic := "legal winner thank year wave sausage worth useful legal winner thank yellow"
+	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "Substrate")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("0x%x", msk.Encode())
+	// Output: 0x4313249608fe8ac10fd5886c92c4579007272cb77c21551ee5b8d60b78041685
+}
+
 func TestSubstrateBip39(t *testing.T) {
 	tests := []struct {
 		mnemonic   string
@@ -135,23 +160,13 @@ func TestSubstrateBip39(t *testing.T) {
 			"938ba18c3f521f19bd4a399c8425b02c716844325b1a65106b9d1593fbafe5e0b85448f523f91c48e331995ff24ae406757cff47d11f240847352b348ff436ed",
 		},
 	}
-	for i, tc := range tests {
-		fmt.Println(i)
-
-		// bzSeed, err := hex.DecodeString()
-		// require.Nil(t, err)
-
-		// var expSeed [64]byte
-		// copy(expSeed[:], bzSeed[:64])
-
-		// var expSecret [32]byte
-		// copy(expSecret[:], bzSeed[:32])
-
+	for _, tc := range tests {
 		entropy, err := MnemonicToEntropy(tc.mnemonic)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		seed, err := SeedFromMnemonic(tc.mnemonic, "Substrate")
-		require.Nil(t, err)
-		miniSecret, err := MiniSecretFromMnemonic(tc.mnemonic, "Substrate")
+		require.NoError(t, err)
+		miniSecret, err := MiniSecretKeyFromMnemonic(tc.mnemonic, "Substrate")
+		require.NoError(t, err)
 		miniSecretBytes := miniSecret.Encode()
 
 		require.Equal(t, tc.hexEntropy, hex.EncodeToString(entropy))
