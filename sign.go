@@ -39,7 +39,7 @@ func NewSignatureFromHex(s string) (*Signature, error) {
 }
 
 // NewSigningContext returns a new transcript initialized with the context for the signature
-//.see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/context.rs#L183
+// .see: https://github.com/w3f/schnorrkel/blob/db61369a6e77f8074eb3247f9040ccde55697f20/src/context.rs#L183
 func NewSigningContext(context, msg []byte) *merlin.Transcript {
 	t := merlin.NewTranscript("SigningContext")
 	t.AppendMessage([]byte(""), context)
