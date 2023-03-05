@@ -20,7 +20,7 @@ go 1.16
 
 Example: key generation, signing, and verification
 
-```
+```go
 package main 
 
 import (
