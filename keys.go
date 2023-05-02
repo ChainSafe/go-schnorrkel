@@ -111,6 +111,21 @@ func NewSecretKey(key [SecretKeySize]byte, nonce [32]byte) *SecretKey {
 	}
 }
 
+func NewSecretKeyFromEd25519Bytes(b [SecretKeySize + 32]byte) *SecretKey {
+	sk := &SecretKey{
+		key:   [SecretKeySize]byte{},
+		nonce: [32]byte{},
+	}
+
+	copy(sk.key[:], b[:32])
+	t := divideScalarByCofactor(sk.key[:])
+
+	copy(sk.key[:], t)
+	copy(sk.nonce[:], b[32:])
+
+	return sk
+}
+
 // NewPublicKey creates a new public key from input bytes
 func NewPublicKey(b [PublicKeySize]byte) (*PublicKey, error) {
 	e := r255.NewElement()
