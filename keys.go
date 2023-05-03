@@ -117,7 +117,7 @@ func NewSecretKeyFromEd25519Bytes(b [SecretKeySize + 32]byte) *SecretKey {
 		nonce: [32]byte{},
 	}
 
-	copy(sk.key[:], b[:32])
+	copy(sk.key[:], b[:SecretKeySize])
 	divideScalarByCofactor(sk.key[:])
 
 	copy(sk.nonce[:], b[32:])
