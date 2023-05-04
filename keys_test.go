@@ -145,3 +145,21 @@ func TestNewPublicKey(t *testing.T) {
 	enc := pk.Encode()
 	require.Equal(t, pub[:], enc[:])
 }
+
+func TestNewSecretKeyFromEd25519Bytes(t *testing.T) {
+	// test vectors from https://github.com/w3f/schnorrkel/blob/ab3e3d609cd8b9eefbe0333066f698c40fd09582/src/keys.rs#L504-L507
+	b := [64]byte{}
+	byteshex, err := hex.DecodeString("28b0ae221c6bb06856b287f60d7ea0d98552ea5a16db16956849aa371db3eb51fd190cce74df356432b410bd64682309d6dedb27c76845daf388557cbac3ca34")
+	require.NoError(t, err)
+	copy(b[:], byteshex)
+
+	pub := [32]byte{}
+	pubhex, err := hex.DecodeString("46ebddef8cd9bb167dc30878d7113b7e168e6f0646beffd77d69d39bad76b47a")
+	require.NoError(t, err)
+	copy(pub[:], pubhex)
+
+	sc := NewSecretKeyFromEd25519Bytes(b)
+	pk, err := sc.Public()
+	require.NoError(t, err)
+	require.Equal(t, pub, pk.Encode())
+}
