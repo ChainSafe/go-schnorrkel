@@ -130,10 +130,6 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 		return false, errors.New("transcript provided is nil")
 	}
 
-	if p.key.Equal(publicKeyAtInfinity) == 1 {
-		return false, errPublicKeyAtInfinity
-	}
-
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 	pubc := p.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
