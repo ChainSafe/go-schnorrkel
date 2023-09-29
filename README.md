@@ -14,7 +14,7 @@ This library has been audited as of August 2021 and is production-ready. Please 
 
 ### dependencies
 
-go 1.16
+go 1.21
 
 ### usage
 
