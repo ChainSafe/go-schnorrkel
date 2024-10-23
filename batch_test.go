@@ -1,8 +1,10 @@
-package schnorrkel
+package schnorrkel_test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/ChainSafe/go-schnorrkel"
 
 	"github.com/gtank/merlin"
 	"github.com/stretchr/testify/require"
@@ -11,12 +13,12 @@ import (
 func ExampleVerifyBatch() {
 	num := 16
 	transcripts := make([]*merlin.Transcript, num)
-	sigs := make([]*Signature, num)
-	pubkeys := make([]*PublicKey, num)
+	sigs := make([]*schnorrkel.Signature, num)
+	pubkeys := make([]*schnorrkel.PublicKey, num)
 
 	for i := 0; i < num; i++ {
 		transcript := merlin.NewTranscript(fmt.Sprintf("hello_%d", i))
-		priv, pub, err := GenerateKeypair()
+		priv, pub, err := schnorrkel.GenerateKeypair()
 		if err != nil {
 			panic(err)
 		}
@@ -30,7 +32,7 @@ func ExampleVerifyBatch() {
 		pubkeys[i] = pub
 	}
 
-	ok, err := VerifyBatch(transcripts, sigs, pubkeys)
+	ok, err := schnorrkel.VerifyBatch(transcripts, sigs, pubkeys)
 	if err != nil {
 		panic(err)
 	}
@@ -46,11 +48,11 @@ func ExampleVerifyBatch() {
 
 func ExampleBatchVerifier() {
 	num := 16
-	v := NewBatchVerifier()
+	v := schnorrkel.NewBatchVerifier()
 
 	for i := 0; i < num; i++ {
 		transcript := merlin.NewTranscript(fmt.Sprintf("hello_%d", i))
-		priv, pub, err := GenerateKeypair()
+		priv, pub, err := schnorrkel.GenerateKeypair()
 		if err != nil {
 			panic(err)
 		}
@@ -80,12 +82,12 @@ func ExampleBatchVerifier() {
 func TestBatchVerify(t *testing.T) {
 	num := 16
 	transcripts := make([]*merlin.Transcript, num)
-	sigs := make([]*Signature, num)
-	pubkeys := make([]*PublicKey, num)
+	sigs := make([]*schnorrkel.Signature, num)
+	pubkeys := make([]*schnorrkel.PublicKey, num)
 
 	for i := 0; i < num; i++ {
 		transcript := merlin.NewTranscript(fmt.Sprintf("hello_%d", i))
-		priv, pub, err := GenerateKeypair()
+		priv, pub, err := schnorrkel.GenerateKeypair()
 		require.NoError(t, err)
 
 		sigs[i], err = priv.Sign(transcript)
@@ -95,7 +97,7 @@ func TestBatchVerify(t *testing.T) {
 		pubkeys[i] = pub
 	}
 
-	ok, err := VerifyBatch(transcripts, sigs, pubkeys)
+	ok, err := schnorrkel.VerifyBatch(transcripts, sigs, pubkeys)
 	require.NoError(t, err)
 	require.True(t, ok)
 }
@@ -103,12 +105,12 @@ func TestBatchVerify(t *testing.T) {
 func TestBatchVerify_Bad(t *testing.T) {
 	num := 16
 	transcripts := make([]*merlin.Transcript, num)
-	sigs := make([]*Signature, num)
-	pubkeys := make([]*PublicKey, num)
+	sigs := make([]*schnorrkel.Signature, num)
+	pubkeys := make([]*schnorrkel.PublicKey, num)
 
 	for i := 0; i < num; i++ {
 		transcript := merlin.NewTranscript(fmt.Sprintf("hello_%d", i))
-		priv, pub, err := GenerateKeypair()
+		priv, pub, err := schnorrkel.GenerateKeypair()
 		require.NoError(t, err)
 
 		sigs[i], err = priv.Sign(transcript)
@@ -119,18 +121,18 @@ func TestBatchVerify_Bad(t *testing.T) {
 	}
 
 	transcripts[6] = merlin.NewTranscript(fmt.Sprintf("hello_%d", 999))
-	ok, err := VerifyBatch(transcripts, sigs, pubkeys)
+	ok, err := schnorrkel.VerifyBatch(transcripts, sigs, pubkeys)
 	require.NoError(t, err)
 	require.False(t, ok)
 }
 
 func TestBatchVerifier(t *testing.T) {
 	num := 16
-	v := NewBatchVerifier()
+	v := schnorrkel.NewBatchVerifier()
 
 	for i := 0; i < num; i++ {
 		transcript := merlin.NewTranscript(fmt.Sprintf("hello_%d", i))
-		priv, pub, err := GenerateKeypair()
+		priv, pub, err := schnorrkel.GenerateKeypair()
 		require.NoError(t, err)
 
 		sig, err := priv.Sign(transcript)

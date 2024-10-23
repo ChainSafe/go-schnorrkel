@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	bip39 "github.com/cosmos/go-bip39"
+	"github.com/cosmos/go-bip39"
 	"golang.org/x/crypto/pbkdf2"
 )
 
