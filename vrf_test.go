@@ -1,7 +1,6 @@
 package schnorrkel
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -297,5 +296,5 @@ func TestVRFVerify_PublicKeyAtInfinity(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = pub.VrfVerify(verifyTranscript, inout.Output(), proof)
-	require.True(t, errors.Is(err, errPublicKeyAtInfinity))
+	require.ErrorIs(t, err, errPublicKeyAtInfinity)
 }

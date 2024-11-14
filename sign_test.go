@@ -2,7 +2,6 @@ package schnorrkel
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -223,5 +222,5 @@ func TestVerify_PublicKeyAtInfinity(t *testing.T) {
 
 	transcript2 := merlin.NewTranscript("hello")
 	_, err = pub.Verify(sig, transcript2)
-	require.True(t, errors.Is(err, errPublicKeyAtInfinity))
+	require.ErrorIs(t, err, errPublicKeyAtInfinity)
 }
