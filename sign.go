@@ -57,10 +57,10 @@ func NewSigningContext(context, msg []byte) *merlin.Transcript {
 // 4. s = kx + r
 // signature: (R, s)
 // public key used for verification: y = g^x
-func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
+func (secretKey *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
 
-	pub, err := sk.Public()
+	pub, err := secretKey.Public()
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (sk *SecretKey) Sign(t *merlin.Transcript) (*Signature, error) {
 	k.FromUniformBytes(kb)
 
 	// form scalar from secret key x
-	x, err := ScalarFromBytes(sk.key)
+	x, err := ScalarFromBytes(secretKey.key)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (kp *Keypair) Sign(t *merlin.Transcript) (*Signature, error) {
 // 1. k = scalar(transcript.extract_bytes())
 // 2. R' = -ky + gs
 // 3. return R' == R
-func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
+func (publicKey *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 	if s == nil {
 		return false, errors.New("signature provided is nil")
 	}
@@ -130,12 +130,12 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 		return false, errors.New("transcript provided is nil")
 	}
 
-	if p.key.Equal(publicKeyAtInfinity) == 1 {
-		return false, errPublicKeyAtInfinity
+	if publicKey.key.Equal(publicKeyAtInfinity) == 1 {
+		return false, ErrPublicKeyAtInfinity
 	}
 
 	t.AppendMessage([]byte("proto-name"), []byte("Schnorr-sig"))
-	pubc := p.Encode()
+	pubc := publicKey.Encode()
 	t.AppendMessage([]byte("sign:pk"), pubc[:])
 	t.AppendMessage([]byte("sign:R"), s.r.Encode([]byte{}))
 
@@ -143,7 +143,7 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) (bool, error) {
 	k := r255.NewScalar()
 	k.FromUniformBytes(kb)
 
-	Rp := r255.NewElement().VarTimeDoubleScalarBaseMult(k, r255.NewElement().Negate(p.key), s.s)
+	Rp := r255.NewElement().VarTimeDoubleScalarBaseMult(k, r255.NewElement().Negate(publicKey.key), s.s)
 
 	return Rp.Equal(s.r) == 1, nil
 }
@@ -199,4 +199,9 @@ func (s *Signature) DecodeNotDistinguishedFromEd25519(in [SignatureSize]byte) er
 	copy(cp[:], in[:])
 	cp[63] |= 128
 	return s.Decode(cp)
+}
+
+// Equal returns true if the two signatures are equal
+func (s *Signature) Equal(other *Signature) bool {
+	return s.r.Equal(other.r) == 1 && s.s.Equal(other.s) == 1
 }

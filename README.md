@@ -26,7 +26,7 @@ package main
 import (
 	"fmt"
 	
-	schnorrkel "github.com/ChainSafe/go-schnorrkel"
+	"github.com/ChainSafe/go-schnorrkel"
 )
 
 func main() {
@@ -46,7 +46,10 @@ func main() {
 		panic(err)
 	}
 
-	ok := pub.Verify(sig, verifyTranscript)
+	ok, err := pub.Verify(sig, verifyTranscript)
+	if err != nil {
+		panic(err)
+	}
 	if !ok {
 		fmt.Println("failed to verify signature")
 		return

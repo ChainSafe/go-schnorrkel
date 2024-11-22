@@ -1,37 +1,13 @@
-package schnorrkel
+package schnorrkel_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
+
+	"github.com/ChainSafe/go-schnorrkel"
 
 	"github.com/stretchr/testify/require"
 )
-
-func ExampleGenerateMnemonic() {
-	mnemonic, err := GenerateMnemonic()
-	if err != nil {
-		panic(err)
-	}
-
-	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("mnemonic: %s, privateKey: 0x%x", mnemonic, msk.Encode())
-}
-
-func ExampleMiniSecretKeyFromMnemonic() {
-	mnemonic := "legal winner thank year wave sausage worth useful legal winner thank yellow"
-	msk, err := MiniSecretKeyFromMnemonic(mnemonic, "Substrate")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("0x%x", msk.Encode())
-	// Output: 0x4313249608fe8ac10fd5886c92c4579007272cb77c21551ee5b8d60b78041685
-}
 
 func TestSubstrateBip39(t *testing.T) {
 	tests := []struct {
@@ -161,11 +137,11 @@ func TestSubstrateBip39(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		entropy, err := MnemonicToEntropy(tc.mnemonic)
+		entropy, err := schnorrkel.MnemonicToEntropy(tc.mnemonic)
 		require.NoError(t, err)
-		seed, err := SeedFromMnemonic(tc.mnemonic, "Substrate")
+		seed, err := schnorrkel.SeedFromMnemonic(tc.mnemonic, "Substrate")
 		require.NoError(t, err)
-		miniSecret, err := MiniSecretKeyFromMnemonic(tc.mnemonic, "Substrate")
+		miniSecret, err := schnorrkel.MiniSecretKeyFromMnemonic(tc.mnemonic, "Substrate")
 		require.NoError(t, err)
 		miniSecretBytes := miniSecret.Encode()
 

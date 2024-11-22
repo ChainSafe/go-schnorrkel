@@ -120,8 +120,8 @@ func DeriveKeySimple(key DerivableKey, i []byte, cc [ChainCodeLength]byte) (*Ext
 }
 
 // DeriveKey derives a new secret key and chain code from an existing secret key and chain code
-func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
-	pub, err := sk.Public()
+func (secretKey *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+	pub, err := secretKey.Public()
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 		return nil, err
 	}
 
-	dsk, err := ScalarFromBytes(sk.key)
+	dsk, err := ScalarFromBytes(secretKey.key)
 	if err != nil {
 		return nil, err
 	}
@@ -162,13 +162,12 @@ func (sk *SecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 
 // HardDeriveMiniSecretKey implements BIP-32 like "hard" derivation of a mini
 // secret from a secret key
-func (sk *SecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]byte) (
+func (secretKey *SecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]byte) (
 	*MiniSecretKey, [ChainCodeLength]byte, error) {
-
 	t := merlin.NewTranscript("SchnorrRistrettoHDKD")
 	t.AppendMessage([]byte("sign-bytes"), i)
 	t.AppendMessage([]byte("chain-code"), cc[:])
-	skenc := sk.Encode()
+	skenc := secretKey.Encode()
 	t.AppendMessage([]byte("secret-key"), skenc[:])
 
 	msk := [MiniSecretKeySize]byte{}
@@ -186,28 +185,28 @@ func (sk *SecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]byte)
 
 // HardDeriveMiniSecretKey implements BIP-32 like "hard" derivation of a mini
 // secret from a mini secret key
-func (mk *MiniSecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]byte) (
+func (miniSecretKey *MiniSecretKey) HardDeriveMiniSecretKey(i []byte, cc [ChainCodeLength]byte) (
 	*MiniSecretKey, [ChainCodeLength]byte, error) {
-	sk := mk.ExpandEd25519()
+	sk := miniSecretKey.ExpandEd25519()
 	return sk.HardDeriveMiniSecretKey(i, cc)
 }
 
 // DeriveKey derives an Extended Key from the Mini Secret Key
-func (mk *MiniSecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+func (miniSecretKey *MiniSecretKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
 	if t == nil {
 		return nil, errors.New("transcript provided is nil")
 	}
 
-	sk := mk.ExpandEd25519()
+	sk := miniSecretKey.ExpandEd25519()
 	return sk.DeriveKey(t, cc)
 }
 
-func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
+func (publicKey *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (*ExtendedKey, error) {
 	if t == nil {
 		return nil, errors.New("transcript provided is nil")
 	}
 
-	sc, dcc, err := pk.DeriveScalarAndChaincode(t, cc)
+	sc, dcc, err := publicKey.DeriveScalarAndChaincode(t, cc)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +214,7 @@ func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 	// derivedPk = pk + (sc * g)
 	p1 := r255.NewElement().ScalarBaseMult(sc)
 	p2 := r255.NewElement()
-	p2.Add(pk.key, p1)
+	p2.Add(publicKey.key, p1)
 
 	pub := &PublicKey{
 		key: p2,
@@ -228,13 +227,13 @@ func (pk *PublicKey) DeriveKey(t *merlin.Transcript, cc [ChainCodeLength]byte) (
 }
 
 // DeriveScalarAndChaincode derives a new scalar and chain code from an existing public key and chain code
-func (pk *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCodeLength]byte) (*r255.Scalar, [ChainCodeLength]byte, error) {
+func (publicKey *PublicKey) DeriveScalarAndChaincode(t *merlin.Transcript, cc [ChainCodeLength]byte) (*r255.Scalar, [ChainCodeLength]byte, error) {
 	if t == nil {
 		return nil, [ChainCodeLength]byte{}, errors.New("transcript provided is nil")
 	}
 
 	t.AppendMessage([]byte("chain-code"), cc[:])
-	pkenc := pk.Encode()
+	pkenc := publicKey.Encode()
 	t.AppendMessage([]byte("public-key"), pkenc[:])
 
 	scBytes := t.ExtractBytes([]byte("HDKD-scalar"), 64)

@@ -1,68 +1,12 @@
 package schnorrkel
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gtank/merlin"
 	r255 "github.com/gtank/ristretto255"
 	"github.com/stretchr/testify/require"
 )
-
-func ExampleSecretKey_VrfSign() {
-	priv, pub, err := GenerateKeypair()
-	if err != nil {
-		panic(err)
-	}
-
-	signTranscript := merlin.NewTranscript("vrf-test")
-	verifyTranscript := merlin.NewTranscript("vrf-test")
-
-	inout, proof, err := priv.VrfSign(signTranscript)
-	if err != nil {
-		panic(err)
-	}
-
-	ok, err := pub.VrfVerify(verifyTranscript, inout.Output(), proof)
-	if err != nil {
-		panic(err)
-	}
-
-	if !ok {
-		fmt.Println("failed to verify VRF output and proof")
-		return
-	}
-
-	fmt.Println("verified VRF output and proof")
-	// Output: verified VRF output and proof
-}
-
-func ExampleKeypair_VrfSign() {
-	priv, pub, err := GenerateKeypair()
-	if err != nil {
-		panic(err)
-	}
-
-	kp := NewKeypair(pub, priv)
-
-	signTranscript := merlin.NewTranscript("vrf-test")
-	verifyTranscript := merlin.NewTranscript("vrf-test")
-
-	inout, proof, err := kp.VrfSign(signTranscript)
-	if err != nil {
-		panic(err)
-	}
-
-	ok, err := kp.VrfVerify(verifyTranscript, inout.Output(), proof)
-	if err != nil {
-		panic(err)
-	}
-
-	if !ok {
-		fmt.Println("failed to verify VRF output and proof")
-		return
-	}
-}
 
 func TestKeypairInputAndOutput(t *testing.T) {
 	signTranscript := merlin.NewTranscript("vrf-test")
@@ -219,7 +163,7 @@ func TestVrfInOut_MakeBytes(t *testing.T) {
 	input := []byte{188, 162, 182, 161, 195, 26, 55, 223, 166, 205, 136, 92, 211, 130, 184, 194, 183, 81, 215, 192, 168, 12, 39, 55, 218, 165, 8, 105, 155, 73, 128, 68}
 	output := [32]byte{214, 40, 153, 246, 88, 74, 127, 242, 54, 193, 7, 5, 90, 51, 45, 5, 207, 59, 64, 68, 134, 232, 19, 223, 249, 88, 74, 125, 64, 74, 220, 48}
 	proof := [64]byte{144, 199, 179, 5, 250, 199, 220, 177, 12, 220, 242, 196, 168, 237, 106, 3, 62, 195, 74, 127, 134, 107, 137, 91, 165, 104, 223, 244, 3, 4, 141, 10, 129, 54, 134, 31, 49, 250, 205, 203, 254, 142, 87, 123, 216, 108, 190, 112, 204, 204, 188, 30, 84, 36, 247, 217, 59, 125, 45, 56, 112, 195, 84, 15}
-	make_bytes_16_expected := []byte{169, 57, 149, 50, 0, 243, 120, 138, 25, 250, 74, 235, 247, 137, 228, 40}
+	makeBytes16Expected := []byte{169, 57, 149, 50, 0, 243, 120, 138, 25, 250, 74, 235, 247, 137, 228, 40}
 
 	pubkey, err := NewPublicKey(pub)
 	require.NoError(t, err)
@@ -243,7 +187,7 @@ func TestVrfInOut_MakeBytes(t *testing.T) {
 
 	bytes, err := inout.MakeBytes(16, []byte("substrate-babe-vrf"))
 	require.NoError(t, err)
-	require.Equal(t, make_bytes_16_expected, bytes)
+	require.Equal(t, makeBytes16Expected, bytes)
 }
 
 func TestVrfVerify_NotKusama(t *testing.T) {
@@ -296,5 +240,5 @@ func TestVRFVerify_PublicKeyAtInfinity(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = pub.VrfVerify(verifyTranscript, inout.Output(), proof)
-	require.ErrorIs(t, err, errPublicKeyAtInfinity)
+	require.ErrorIs(t, err, ErrPublicKeyAtInfinity)
 }
